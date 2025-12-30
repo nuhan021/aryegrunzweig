@@ -15,6 +15,8 @@ class IconPath{
   static const String plus = '$_basePath/plus.png';
   static const String send = '$_basePath/send.png';
   static const String settings = '$_basePath/settings.png';
-  static const String vector1 = '$_basePath/Vector (1).png';
+  static const String order = '$_basePath/order.png';
+  static const String chat = '$_basePath/chat.png';
   static const String video = '$_basePath/video.png';
+  static const String location = '$_basePath/location.png';
 }

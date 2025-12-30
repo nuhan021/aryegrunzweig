@@ -132,11 +132,13 @@ class LoginScreen extends StatelessWidget {
               7.verticalSpace,
 
               // login button
-              CustomButton(text: 'Login', onPressed: () {}),
+              CustomButton(text: 'Login', onPressed: () => Get.offAllNamed(AppRoute.appBottomNavBarScreen)),
 
               25.verticalSpace,
 
-              CustomOutLineButton(text: 'Create Account', onPressed: () {}),
+              CustomOutLineButton(text: 'Create Account', onPressed: () {
+                Get.toNamed(AppRoute.getSignUpScreen());
+              }),
             ],
           ).paddingSymmetric(horizontal: 26.w),
         ),
