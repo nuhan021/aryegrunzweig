@@ -4,9 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../utils/constants/colors.dart';
 import '../styles/global_text_style.dart';
 
-
 class CustomAppBar extends StatelessWidget {
-  const CustomAppBar({super.key, this.isBack = true, required this.title, required this.subtitle});
+  const CustomAppBar({
+    super.key,
+    this.isBack = true,
+    required this.title,
+    required this.subtitle,
+  });
 
   final bool isBack;
   final String title;
@@ -15,7 +19,6 @@ class CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-
       width: double.maxFinite,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
@@ -29,11 +32,17 @@ class CustomAppBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.arrow_back_ios, size: 20.w, color: Colors.white,),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Icon(
+                  Icons.arrow_back_ios,
+                  size: 20.w,
+                  color: Colors.white,
+                ),
+              ),
               Text(
                 'Back',
                 style: getTextStyle(
@@ -67,7 +76,6 @@ class CustomAppBar extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-
         ],
       ),
     );
