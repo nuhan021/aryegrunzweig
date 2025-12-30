@@ -1,3 +1,6 @@
+import 'package:aryegrunzweig/core/common/widgets/custom_button.dart';
+import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
+import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -8,14 +11,14 @@ import '../../../../core/utils/constants/icon_path.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 
 class OtpScreen extends StatelessWidget {
-  const OtpScreen({super.key});
+  OtpScreen({super.key});
+
+  final AuthController controller = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-      ),
+      appBar: AppBar(backgroundColor: Colors.white),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,7 +26,10 @@ class OtpScreen extends StatelessWidget {
             16.verticalSpace,
 
             // logo
-            Align(alignment: AlignmentGeometry.center, child: Image.asset(IconPath.logo, width: 158.w,)),
+            Align(
+              alignment: AlignmentGeometry.center,
+              child: Image.asset(IconPath.logo, width: 158.w),
+            ),
 
             55.verticalSpace,
 
@@ -63,7 +69,27 @@ class OtpScreen extends StatelessWidget {
                 /* when value changes */
               },
               onSubmit: (verificationCode) {
-                // signUpScreenController.otp = verificationCode;
+                controller.otp = verificationCode;
+              },
+            ),
+
+            25.verticalSpace,
+
+            Text(
+              'Resend 01:25',
+              style: getTextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.primary,
+              ),
+            ),
+
+            25.verticalSpace,
+
+            CustomButton(
+              text: 'Verify',
+              onPressed: () {
+                Get.offAllNamed(AppRoute.getAccountCreateSuccessScreen());
               },
             ),
           ],
