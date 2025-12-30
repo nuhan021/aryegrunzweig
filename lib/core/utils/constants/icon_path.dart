@@ -1,7 +1,7 @@
 
 class IconPath{
   IconPath._();
-  static const String icon = 'assets/logo/logo.png';
+  static const String logo = 'assets/logo/logo.png';
   static const String _basePath = 'assets/icons';
 
   static const String call = '$_basePath/call.png';
@@ -10,7 +10,6 @@ class IconPath{
   static const String ellipse = '$_basePath/ellipse.png';
   static const String gift = '$_basePath/gift.png';
   static const String home = '$_basePath/home.png';
-  static const String logo = '$_basePath/logo.png';
   static const String notification = '$_basePath/notification.png';
   static const String person = '$_basePath/person.png';
   static const String plus = '$_basePath/plus.png';
