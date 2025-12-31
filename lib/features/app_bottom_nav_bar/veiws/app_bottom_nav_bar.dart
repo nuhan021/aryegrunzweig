@@ -1,5 +1,6 @@
 import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import 'package:aryegrunzweig/features/home/views/screens/home_screen.dart';
+import 'package:aryegrunzweig/features/profile/view_profile/views/screens/view_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -13,7 +14,8 @@ import '../../../core/utils/constants/icon_path.dart';
 class AppBottomNavBar extends StatelessWidget {
   AppBottomNavBar({super.key});
 
-  final AppBottomNavBarController controller = Get.find<AppBottomNavBarController>();
+  final AppBottomNavBarController controller =
+      Get.find<AppBottomNavBarController>();
 
   List<Widget> _buildScreens() {
     return [
@@ -21,7 +23,7 @@ class AppBottomNavBar extends StatelessWidget {
       Placeholder(),
       Placeholder(),
       Placeholder(),
-      Placeholder(),
+      ViewProfileScreen(),
     ];
   }
 

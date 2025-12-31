@@ -1,4 +1,5 @@
 import 'package:aryegrunzweig/features/auth/views/screens/otp_screen.dart';
+import 'package:aryegrunzweig/features/profile/view_profile/views/screens/view_profile_screen.dart';
 import 'package:get/get.dart';
 import '../features/app_bottom_nav_bar/veiws/app_bottom_nav_bar.dart';
 import '../features/auth/views/screens/account_create_success_screen.dart';
@@ -15,8 +16,7 @@ class AppRoute {
   static String signUpScreen = "/signUpScreen";
   static String accountCreateSuccessScreen = "/accountCreateSuccessScreen";
   static String appBottomNavBarScreen = "/appBottomNavBarScreen";
-
-
+  static String viewProfileScreen = "/viewProfileScreen";
 
   static String getOnboardingScreen() => onboardingScreen;
   static String getLoginScreen() => loginScreen;
@@ -25,9 +25,7 @@ class AppRoute {
   static String getSignUpScreen() => signUpScreen;
   static String getAccountCreateSuccessScreen() => accountCreateSuccessScreen;
   static String getAppBottomNavBarScreen() => appBottomNavBarScreen;
-
-
-
+  static String getViewProfileScreen() => viewProfileScreen;
 
   static List<GetPage> routes = [
     GetPage(name: onboardingScreen, page: () => OnboardingScreen()),
@@ -35,7 +33,11 @@ class AppRoute {
     GetPage(name: forgotPasswordScreen, page: () => ForgotPasswordScreen()),
     GetPage(name: otpScreen, page: () => OtpScreen()),
     GetPage(name: signUpScreen, page: () => SignUpScreen()),
-    GetPage(name: accountCreateSuccessScreen, page: () => AccountCreateSuccessScreen()),
+    GetPage(
+      name: accountCreateSuccessScreen,
+      page: () => AccountCreateSuccessScreen(),
+    ),
     GetPage(name: appBottomNavBarScreen, page: () => AppBottomNavBar()),
+    GetPage(name: viewProfileScreen, page: () => ViewProfileScreen()),
   ];
 }
