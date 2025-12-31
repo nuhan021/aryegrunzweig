@@ -41,9 +41,7 @@ class ProfileMenuItemWidget extends StatelessWidget {
                 child: Icon(
                   menuItem.icon,
                   size: 20.w,
-                  color: isHighlighted
-                      ? AppColors.primary
-                      : menuItem.iconBackgroundColor,
+                  color: isHighlighted ? Colors.white : AppColors.primary,
                 ),
               ),
             ),
