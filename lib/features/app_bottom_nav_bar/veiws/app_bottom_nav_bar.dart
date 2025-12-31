@@ -1,4 +1,5 @@
 import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
+import 'package:aryegrunzweig/features/chat/individual_chat/views/screens/individual_chat_screen.dart';
 import 'package:aryegrunzweig/features/home/views/screens/home_screen.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/views/screens/view_profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class AppBottomNavBar extends StatelessWidget {
       HomeScreen(),
       Placeholder(),
       Placeholder(),
-      Placeholder(),
+      IndividualChatScreen(),
       ViewProfileScreen(),
     ];
   }

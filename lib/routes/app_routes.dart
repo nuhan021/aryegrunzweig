@@ -1,4 +1,5 @@
 import 'package:aryegrunzweig/features/auth/views/screens/otp_screen.dart';
+import 'package:aryegrunzweig/features/chat/individual_chat/views/screens/individual_chat_screen.dart';
 import 'package:aryegrunzweig/features/notifications/views/screens/notifications_screen.dart';
 import 'package:aryegrunzweig/features/profile/edit_profile/views/screens/edit_profile_screen.dart';
 import 'package:aryegrunzweig/features/profile/equipment_details/views/screens/equipment_details_screen.dart';
@@ -33,6 +34,7 @@ class AppRoute {
   static String helpSupportScreen = "/helpSupportScreen";
   static String termsPrivacyScreen = "/termsPrivacyScreen";
   static String notificationsScreen = "/notificationsScreen";
+  static String individualChatScreen = "/individualChatScreen";
 
   static String getOnboardingScreen() => onboardingScreen;
   static String getLoginScreen() => loginScreen;
@@ -50,6 +52,7 @@ class AppRoute {
   static String getHelpSupportScreen() => helpSupportScreen;
   static String getTermsPrivacyScreen() => termsPrivacyScreen;
   static String getNotificationsScreen() => notificationsScreen;
+  static String getIndividualChatScreen() => individualChatScreen;
 
   static List<GetPage> routes = [
     GetPage(name: onboardingScreen, page: () => OnboardingScreen()),
@@ -71,5 +74,6 @@ class AppRoute {
     GetPage(name: helpSupportScreen, page: () => HelpSupportScreen()),
     GetPage(name: termsPrivacyScreen, page: () => TermsConditionsScreen()),
     GetPage(name: notificationsScreen, page: () => NotificationsScreen()),
+    GetPage(name: individualChatScreen, page: () => IndividualChatScreen()),
   ];
 }
