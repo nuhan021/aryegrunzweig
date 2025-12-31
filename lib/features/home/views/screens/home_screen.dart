@@ -4,6 +4,7 @@ import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
 import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
 import 'package:aryegrunzweig/features/home/views/screens/select_issue_screen.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/service_grid_view.dart';
+import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -125,28 +126,31 @@ class HomeAppBar extends StatelessWidget {
                 ],
               ),
 
-              Container(
-                height: 36.h,
-                width: 36.w,
-                padding: EdgeInsets.all(5.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.2),
-                ),
-                child: Badge(
-                  label: Text(
-                    '5',
-                    style: getTextStyle(
-                      fontSize: 8.sp,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                    ),
+              GestureDetector(
+                onTap: () => Get.toNamed(AppRoute.notificationsScreen),
+                child: Container(
+                  height: 36.h,
+                  width: 36.w,
+                  padding: EdgeInsets.all(5.w),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.2),
                   ),
+                  child: Badge(
+                    label: Text(
+                      '5',
+                      style: getTextStyle(
+                        fontSize: 8.sp,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                      ),
+                    ),
 
-                  child: Image.asset(
-                    IconPath.notification,
-                    height: 20.sp,
-                  ).paddingOnly(top: 3.h, left: 3.w),
+                    child: Image.asset(
+                      IconPath.notification,
+                      height: 20.sp,
+                    ).paddingOnly(top: 3.h, left: 3.w),
+                  ),
                 ),
               ),
             ],
