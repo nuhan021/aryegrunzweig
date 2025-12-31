@@ -1,5 +1,7 @@
 import 'package:aryegrunzweig/core/common/widgets/custom_app_bar.dart';
 import 'package:aryegrunzweig/core/common/widgets/custom_button.dart';
+import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
+import 'package:aryegrunzweig/features/home/views/screens/request_booking_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -52,24 +54,18 @@ class ScheduleServiceScreen extends StatelessWidget {
 
                     25.verticalSpace,
 
-                    // টাইম স্লট সেকশন
+
                     Text('Select Time', style: _headerStyle()),
                     15.verticalSpace,
 
-                    // টাইম স্লট গ্রিড
+
                     _buildTimeSlotGrid(),
 
                     40.verticalSpace,
                     CustomButton(
                       text: 'Next',
                       onPressed: () {
-                        // পরবর্তী ধাপে যাওয়ার লজিক
-                        print(
-                          "Selected Date: ${controller.selectedDate.value}",
-                        );
-                        print(
-                          "Selected Time: ${controller.selectedTimeSlot.value}",
-                        );
+                        AppHelperFunctions.navigateToScreen(context, RequestBookingScreen());
                       },
                     ),
                     20.verticalSpace,

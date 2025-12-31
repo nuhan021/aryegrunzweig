@@ -19,4 +19,5 @@ class IconPath{
   static const String chat = '$_basePath/chat.png';
   static const String video = '$_basePath/video.png';
   static const String location = '$_basePath/location.png';
+  static const String range = '$_basePath/range.png';
 }

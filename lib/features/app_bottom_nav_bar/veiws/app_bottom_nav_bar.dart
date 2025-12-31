@@ -1,5 +1,7 @@
 import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import 'package:aryegrunzweig/features/home/views/screens/home_screen.dart';
+import 'package:aryegrunzweig/features/home/views/screens/select_issue_screen.dart';
+import 'package:aryegrunzweig/features/orders/views/screens/orders_screen.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/views/screens/view_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,8 +22,8 @@ class AppBottomNavBar extends StatelessWidget {
   List<Widget> _buildScreens() {
     return [
       HomeScreen(),
-      Placeholder(),
-      Placeholder(),
+      OrdersScreen(),
+      SelectIssueScreen(),
       Placeholder(),
       ViewProfileScreen(),
     ];
