@@ -1,4 +1,11 @@
 import 'package:aryegrunzweig/features/auth/views/screens/otp_screen.dart';
+import 'package:aryegrunzweig/features/profile/edit_profile/views/screens/edit_profile_screen.dart';
+import 'package:aryegrunzweig/features/profile/equipment_details/views/screens/equipment_details_screen.dart';
+import 'package:aryegrunzweig/features/profile/help_support/views/screens/help_support_screen.dart';
+import 'package:aryegrunzweig/features/profile/payment_methods/views/screens/payment_methods_screen.dart';
+import 'package:aryegrunzweig/features/profile/saved_addresses/views/screens/saved_addresses_screen.dart';
+import 'package:aryegrunzweig/features/profile/service_history/views/screens/service_history_screen.dart';
+import 'package:aryegrunzweig/features/profile/terms_conditions/views/screens/terms_conditions_screen.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/views/screens/view_profile_screen.dart';
 import 'package:get/get.dart';
 import '../features/app_bottom_nav_bar/veiws/app_bottom_nav_bar.dart';
@@ -17,6 +24,13 @@ class AppRoute {
   static String accountCreateSuccessScreen = "/accountCreateSuccessScreen";
   static String appBottomNavBarScreen = "/appBottomNavBarScreen";
   static String viewProfileScreen = "/viewProfileScreen";
+  static String editProfileScreen = "/editProfileScreen";
+  static String paymentMethodsScreen = "/paymentMethodsScreen";
+  static String equipmentDetailsScreen = "/equipmentDetailsScreen";
+  static String savedAddressesScreen = "/savedAddressesScreen";
+  static String serviceHistoryScreen = "/serviceHistoryScreen";
+  static String helpSupportScreen = "/helpSupportScreen";
+  static String termsPrivacyScreen = "/termsPrivacyScreen";
 
   static String getOnboardingScreen() => onboardingScreen;
   static String getLoginScreen() => loginScreen;
@@ -26,6 +40,13 @@ class AppRoute {
   static String getAccountCreateSuccessScreen() => accountCreateSuccessScreen;
   static String getAppBottomNavBarScreen() => appBottomNavBarScreen;
   static String getViewProfileScreen() => viewProfileScreen;
+  static String getEditProfileScreen() => editProfileScreen;
+  static String getPaymentMethodsScreen() => paymentMethodsScreen;
+  static String getEquipmentDetailsScreen() => equipmentDetailsScreen;
+  static String getSavedAddressesScreen() => savedAddressesScreen;
+  static String getServiceHistoryScreen() => serviceHistoryScreen;
+  static String getHelpSupportScreen() => helpSupportScreen;
+  static String getTermsPrivacyScreen() => termsPrivacyScreen;
 
   static List<GetPage> routes = [
     GetPage(name: onboardingScreen, page: () => OnboardingScreen()),
@@ -39,5 +60,12 @@ class AppRoute {
     ),
     GetPage(name: appBottomNavBarScreen, page: () => AppBottomNavBar()),
     GetPage(name: viewProfileScreen, page: () => ViewProfileScreen()),
+    GetPage(name: editProfileScreen, page: () => EditProfileScreen()),
+    GetPage(name: paymentMethodsScreen, page: () => PaymentMethodsScreen()),
+    GetPage(name: equipmentDetailsScreen, page: () => EquipmentDetailsScreen()),
+    GetPage(name: savedAddressesScreen, page: () => SavedAddressesScreen()),
+    GetPage(name: serviceHistoryScreen, page: () => ServiceHistoryScreen()),
+    GetPage(name: helpSupportScreen, page: () => HelpSupportScreen()),
+    GetPage(name: termsPrivacyScreen, page: () => TermsConditionsScreen()),
   ];
 }
