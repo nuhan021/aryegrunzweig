@@ -24,7 +24,7 @@ class AppBottomNavBar extends StatelessWidget {
     return [
       HomeScreen(),
       SelectIssueScreen(),
-      const ShopScreen(),
+      ShopScreen(),
       OrdersScreen(),
       ViewProfileScreen(),
     ];
@@ -33,7 +33,12 @@ class AppBottomNavBar extends StatelessWidget {
   List<PersistentTabConfig> _tabs() => [
     _buildTab(index: 0, iconPath: IconPath.home, title: "Home"),
     _buildTab(index: 1, iconPath: IconPath.headset, title: "Services"),
-    _buildTab(index: 2, iconData: Icons.shopping_cart_outlined, title: "Shop"),
+    _buildTab(
+      index: 2,
+      iconData: Icons.shopping_cart_outlined,
+      title: "Shop",
+      isEmphasized: true,
+    ),
     _buildTab(index: 3, iconPath: IconPath.order, title: "Orders"),
     _buildTab(index: 4, iconPath: IconPath.person, title: "Profile"),
   ];
@@ -43,6 +48,7 @@ class AppBottomNavBar extends StatelessWidget {
     String? iconPath,
     IconData? iconData,
     required String title,
+    bool isEmphasized = false,
   }) {
     assert(
       (iconPath == null) != (iconData == null),
@@ -54,10 +60,28 @@ class AppBottomNavBar extends StatelessWidget {
         icon: Obx(() {
           bool isActive = controller.currentIndex.value == index;
           final color = isActive ? AppColors.primary : Colors.grey;
-          if (iconData != null) {
-            return Icon(iconData, size: 20.w, color: color);
-          }
-          return Image.asset(iconPath!, width: 20.w, color: color);
+
+          final iconWidget = iconData != null
+              ? Icon(iconData, size: isEmphasized ? 24.w : 20.w, color: color)
+              : Image.asset(
+                  iconPath!,
+                  width: isEmphasized ? 24.w : 20.w,
+                  color: color,
+                );
+
+          if (!isEmphasized) return iconWidget;
+
+          return Container(
+            height: 38.w,
+            width: 38.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: color, width: 1.8),
+            ),
+            child: iconWidget,
+          );
         }),
         title: title,
         textStyle: getTextStyle(fontSize: 10.sp, fontWeight: FontWeight.w500),
@@ -74,7 +98,7 @@ class AppBottomNavBar extends StatelessWidget {
 
       tabs: _tabs(),
       navBarBuilder: (navBarConfig) =>
-          Style1BottomNavBar(navBarConfig: navBarConfig, height: 60.h),
+          Style1BottomNavBar(navBarConfig: navBarConfig, height: 68.h),
       onTabChanged: (index) {
         controller.changeCurrentIndex(index);
       },
