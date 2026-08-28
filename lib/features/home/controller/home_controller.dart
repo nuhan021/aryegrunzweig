@@ -26,6 +26,73 @@ class HomeController extends GetxController {
   var selectedVideos = <File>[].obs;
   final ImagePicker _picker = ImagePicker();
 
+  // --- Service request flow (Select Issue -> Details -> Media -> Review) ---
+  static const Map<String, List<String>> serviceIssueOptions = {
+    'Maintenance': [
+      'Unit will not turn on',
+      'Unit will not shut off',
+      'Clogged system',
+      'Low suction',
+      'Retractable hose will not pull out or retract',
+      'Broken inlet valve / vacuum port',
+      'General service or parts request',
+    ],
+    'Installation': [
+      'New System',
+      'Custom Fit',
+      'System Upgrade',
+      'Architectural',
+    ],
+  };
+
+  var srIssueCategory = 'Maintenance'.obs;
+  var srSelectedIssue = 'Unit will not turn on'.obs;
+
+  final TextEditingController srAddressController = TextEditingController(
+    text: '1842 Maplewood Drive, Westmount',
+  );
+  final TextEditingController srDescriptionController =
+      TextEditingController();
+  var srPreferredDate = Rxn<DateTime>();
+  var srPreferredTime = ''.obs;
+
+  var srImages = <File>[].obs;
+  var srVideos = <File>[].obs;
+
+  void srSelectCategory(String category) {
+    srIssueCategory.value = category;
+    srSelectedIssue.value = serviceIssueOptions[category]!.first;
+  }
+
+  void srSelectIssue(String issue) {
+    srSelectedIssue.value = issue;
+  }
+
+  void srSetPreferredDate(DateTime date) {
+    srPreferredDate.value = date;
+  }
+
+  void srSetPreferredTime(String time) {
+    srPreferredTime.value = time;
+  }
+
+  Future<void> srPickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      srImages.add(File(image.path));
+    }
+  }
+
+  Future<void> srPickVideo() async {
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      srVideos.add(File(video.path));
+    }
+  }
+
+  void srRemoveImage(int index) => srImages.removeAt(index);
+  void srRemoveVideo(int index) => srVideos.removeAt(index);
+
   var focusedDay = DateTime.now().obs;
   var selectedDate = DateTime.now().obs;
   var selectedTimeSlot = "8:30 AM - 10:00 AM".obs;

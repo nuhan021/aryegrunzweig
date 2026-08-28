@@ -1,29 +1,19 @@
-import 'package:aryegrunzweig/core/common/widgets/custom_button.dart';
 import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
-import 'package:aryegrunzweig/features/home/views/screens/add_details_screen.dart';
+import 'package:aryegrunzweig/features/home/views/screens/service_request_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
+import '../../../../core/utils/constants/colors.dart';
 import '../../controller/home_controller.dart';
+import '../widgets/service_request_buttons.dart';
 
 class SelectIssueScreen extends StatelessWidget {
   SelectIssueScreen({super.key});
 
   final HomeController controller = Get.find<HomeController>();
-
-  final List<String> problems = [
-    "Low suction",
-    "No Suction",
-    "Clogged pipes or hoses",
-    "Hose not pulling in or out",
-    "Accessory not working",
-    "Filter & Bag Replacement",
-    "parts & cleaning Accessories",
-    "General inspection needed",
-    "Machine doesn't turn on or doesn't shut off",
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -32,96 +22,147 @@ class SelectIssueScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Fixed Top Bar
-            CustomAppBar(
-              title: 'Select Issue',
-              subtitle: 'What issue are you experiencing?',
+            const CustomAppBar(
+              title: 'What can we help with?',
+              subtitle:
+                  'Select the issue that best describes your central vacuum system.',
             ),
-
-            // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-
                 child: Column(
                   children: [
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: problems.length,
-                      separatorBuilder: (context, index) => 12.verticalSpace,
-                      itemBuilder: (context, index) {
-                        return Obx(() {
-                          bool isSelected =
-                              controller.selectedProblem.value ==
-                              problems[index];
-
-                          return GestureDetector(
-                            onTap: () =>
-                                controller.updateProblem(problems[index]),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 14.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF1C4F50)
-                                    : const Color(0xFFF9F9F9),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.transparent
-                                      : Colors.black.withOpacity(0.05),
+                    _CategoryTabs(controller: controller),
+                    18.verticalSpace,
+                    Obx(
+                      () => Column(
+                        children: HomeController
+                            .serviceIssueOptions[controller
+                                .srIssueCategory
+                                .value]!
+                            .map(
+                              (issue) => Padding(
+                                padding: EdgeInsets.only(bottom: 12.h),
+                                child: _IssueOptionTile(
+                                  label: issue,
+                                  isSelected:
+                                      controller.srSelectedIssue.value ==
+                                      issue,
+                                  onTap: () => controller.srSelectIssue(issue),
                                 ),
                               ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    isSelected
-                                        ? Icons.radio_button_checked
-                                        : Icons.radio_button_off,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.grey.withOpacity(0.5),
-                                    size: 20.sp,
-                                  ),
-                                  12.horizontalSpace,
-                                  Expanded(
-                                    child: Text(
-                                      problems[index],
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.black87,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        });
-                      },
+                            )
+                            .toList(),
+                      ),
                     ),
-                    30.verticalSpace,
                   ],
                 ),
               ),
             ),
-
-            // Bottom Fixed Button
             Padding(
               padding: EdgeInsets.all(16.w),
-              child: CustomButton(
-                text: "Continue",
+              child: SrPrimaryButton(
+                text: 'Continue',
                 onPressed: () => AppHelperFunctions.navigateToScreen(
                   context,
-                  AddDetailsScreen(),
+                  ServiceRequestDetailsScreen(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryTabs extends StatelessWidget {
+  const _CategoryTabs({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => Container(
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Row(
+          children: HomeController.serviceIssueOptions.keys.map((category) {
+            final bool isSelected =
+                controller.srIssueCategory.value == category;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => controller.srSelectCategory(category),
+                child: Container(
+                  height: 40.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    category,
+                    style: getTextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.grey.shade500,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _IssueOptionTile extends StatelessWidget {
+  const _IssueOptionTile({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: double.maxFinite,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.08)
+              : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              size: 20.sp,
+              color: isSelected ? AppColors.primary : Colors.grey.shade400,
+            ),
+            12.horizontalSpace,
+            Expanded(
+              child: Text(
+                label,
+                style: getTextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.primary : Colors.black87,
+                  textAlign: TextAlign.left,
                 ),
               ),
             ),
