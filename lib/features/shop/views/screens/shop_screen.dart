@@ -10,6 +10,7 @@ import '../../../../core/utils/constants/colors.dart';
 import '../../controller/shop_controller.dart';
 import '../widgets/shop_product_card.dart';
 import 'order_summary_screen.dart';
+import 'product_details_screen.dart';
 
 class ShopScreen extends StatelessWidget {
   ShopScreen({super.key});
@@ -132,6 +133,13 @@ class ShopScreen extends StatelessWidget {
                           final product = controller.currentPageProducts[index];
                           return ShopProductCard(
                             product: product,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ProductDetailsScreen(product: product),
+                              ),
+                            ),
                             onAddToCart: () {
                               controller.addToCart(product);
                               Navigator.push(

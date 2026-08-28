@@ -60,10 +60,10 @@ class ShopController extends GetxController {
 
   var cart = <CartLine>[].obs;
 
-  void addToCart(ShopProduct product) {
+  void addToCart(ShopProduct product, {int quantity = 1}) {
     cart
       ..clear()
-      ..add(CartLine(product: product));
+      ..add(CartLine(product: product, quantity: quantity));
   }
 
   void incrementQuantity(CartLine line) => line.quantity.value++;
