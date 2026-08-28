@@ -1,16 +1,13 @@
 import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
 import 'package:aryegrunzweig/core/utils/constants/colors.dart';
 import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
-import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
-import 'package:aryegrunzweig/features/home/views/screens/select_issue_screen.dart';
-import 'package:aryegrunzweig/features/home/views/widgets/service_grid_view.dart';
+import 'package:aryegrunzweig/features/home/views/widgets/home_activity_cards.dart';
+import 'package:aryegrunzweig/features/home/views/widgets/home_quick_action_cards.dart';
+import 'package:aryegrunzweig/features/home/views/widgets/shop_products_preview.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
-import '../../../../core/common/widgets/custom_button.dart';
-import '../widgets/offer_carousel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -27,45 +25,43 @@ class HomeScreen extends StatelessWidget {
             // body
             Expanded(
               child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    20.verticalSpace,
+                    18.verticalSpace,
 
-                    // image carasol
-                    OfferCarousel(),
+                    const HomeQuickActionCards(),
 
-                    Column(
-                      children: [
-                        // services
-                        Text(
-                          'Services',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
+                    18.verticalSpace,
 
-                        20.verticalSpace,
+                    const QuoteReadyCard(
+                      price: '\$245.00',
+                      expiresAt: 'Expires today 4:30 PM',
+                      title: 'Central Vacuum Repair',
+                      requestId: 'SR-1048',
+                      description: 'Low suction throughout the home',
+                    ),
 
-                        ServiceGridView(),
+                    const ScheduledCard(
+                      title: 'Central Vacuum Repair',
+                      dateTime: 'Friday, Aug 1 · 9:00 – 10:30 AM',
+                      technicianName: 'Marc Anderson',
+                    ),
 
-                        25.verticalSpace,
+                    const ShippedCard(
+                      orderId: '#CC-3084',
+                      title: 'Retractable Hose System',
+                      trackingNumber: 'UPS 1Z82A4X95012345678',
+                    ),
 
-                        CustomButton(
-                          text: 'Quick Book Service',
-                          onPressed: () => AppHelperFunctions.navigateToScreen(
-                            context,
-                            SelectIssueScreen(),
-                          ),
-                        ),
+                    10.verticalSpace,
 
-                        25.verticalSpace,
-                      ],
-                    ).paddingSymmetric(horizontal: 11.w),
+                    const ShopProductsPreview(),
+
+                    25.verticalSpace,
                   ],
-                ).paddingSymmetric(horizontal: 5.w),
+                ),
               ),
             ),
           ],
@@ -128,29 +124,31 @@ class HomeAppBar extends StatelessWidget {
 
               GestureDetector(
                 onTap: () => Get.toNamed(AppRoute.notificationsScreen),
-                child: Container(
-                  height: 36.h,
-                  width: 36.w,
-                  padding: EdgeInsets.all(5.w),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.2),
-                  ),
-                  child: Badge(
-                    label: Text(
-                      '5',
-                      style: getTextStyle(
-                        fontSize: 8.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Image.asset(
+                      IconPath.notification,
+                      height: 24.sp,
+                      color: Colors.white,
+                    ),
+                    Positioned(
+                      top: -2.h,
+                      right: -2.w,
+                      child: Container(
+                        height: 8.w,
+                        width: 8.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.redAccent,
+                          border: Border.all(
+                            color: AppColors.primary,
+                            width: 1.5,
+                          ),
+                        ),
                       ),
                     ),
-
-                    child: Image.asset(
-                      IconPath.notification,
-                      height: 20.sp,
-                    ).paddingOnly(top: 3.h, left: 3.w),
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -165,7 +163,7 @@ class HomeAppBar extends StatelessWidget {
               color: Colors.black,
             ),
             decoration: InputDecoration(
-              hintText: 'Search material name...',
+              hintText: 'Search Services...',
               hintStyle: TextStyle(color: Colors.grey, fontSize: 14.sp),
 
               prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20.sp),
@@ -177,7 +175,6 @@ class HomeAppBar extends StatelessWidget {
                 vertical: 12.h,
               ),
 
-              // বর্ডার স্টাইল
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(
