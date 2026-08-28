@@ -58,6 +58,10 @@ class ShopController extends GetxController {
     currentPage.value = page;
   }
 
+  List<ShopProduct> relatedProducts(ShopProduct current, {int count = 4}) {
+    return _allProducts.where((p) => p.id != current.id).take(count).toList();
+  }
+
   var cart = <CartLine>[].obs;
 
   void addToCart(ShopProduct product, {int quantity = 1}) {
