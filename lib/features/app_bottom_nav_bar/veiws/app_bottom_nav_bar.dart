@@ -23,7 +23,7 @@ class AppBottomNavBar extends StatelessWidget {
   List<Widget> _buildScreens() {
     return [
       HomeScreen(),
-      const ServicesScreen(),
+      ServicesScreen(),
       ShopScreen(),
       MyOrdersScreen(),
       ViewProfileScreen(),

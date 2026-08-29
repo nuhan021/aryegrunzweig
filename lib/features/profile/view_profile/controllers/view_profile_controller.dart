@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 class ViewProfileController extends GetxController {
   // Observable variables for dynamic updates
   var userName = 'John Doe'.obs;
-  var userEmail = 'john.doe@example.com'.obs;
+  var userEmail = 'sarah.thompson@email.com'.obs;
   var profileImageUrl = Rxn<String>();
 
   @override

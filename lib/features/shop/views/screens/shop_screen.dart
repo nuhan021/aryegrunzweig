@@ -25,6 +25,7 @@ class ShopScreen extends StatelessWidget {
         child: Column(
           children: [
             const CustomAppBar(
+              isBack: false,
               title: 'Shop Central Vacuum Products',
               subtitle:
                   'The invisible infrastructure for a healthier home. Discover our range of high-performance power units and precision cleaning kits.',

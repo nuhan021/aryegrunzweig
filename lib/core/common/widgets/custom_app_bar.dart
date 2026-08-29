@@ -32,29 +32,30 @@ class CustomAppBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Icon(
-                  Icons.arrow_back_ios,
-                  size: 20.w,
-                  color: Colors.white,
+          if (isBack) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    Icons.arrow_back_ios,
+                    size: 20.w,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              Text(
-                'Back',
-                style: getTextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white,
+                Text(
+                  'Back',
+                  style: getTextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-            ],
-          ),
-
-          20.verticalSpace,
+              ],
+            ),
+            20.verticalSpace,
+          ],
 
           // title
           Text(

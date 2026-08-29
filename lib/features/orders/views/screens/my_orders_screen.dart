@@ -25,6 +25,7 @@ class MyOrdersScreen extends StatelessWidget {
         child: Column(
           children: [
             const CustomAppBar(
+              isBack: false,
               title: 'My orders',
               subtitle: 'View and manage all your service orders in one place.',
             ),
