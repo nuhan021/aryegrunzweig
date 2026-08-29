@@ -6,7 +6,9 @@ import 'core/bindings/controller_binder.dart';
 import 'core/utils/theme/theme.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.initialRoute});
+
+  final String? initialRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
       builder: (_, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
-          initialRoute: AppRoute.getOnboardingScreen(),
+          initialRoute: initialRoute ?? AppRoute.onboardingScreen,
           getPages: AppRoute.routes,
           initialBinding: ControllerBinder(),
           themeMode: ThemeMode.system,

@@ -41,6 +41,7 @@ dependencies:
   flutter_screenutil: ^5.9.3
   google_fonts: ^6.3.3
   shared_preferences: ^2.5.4
+  flutter_secure_storage: ^9.2.4
   get: ^4.7.3
   web_socket_channel: ^3.0.3
   persistent_bottom_nav_bar_v2: ^6.2.0

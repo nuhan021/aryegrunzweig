@@ -1,7 +1,23 @@
 import 'package:aryegrunzweig/app.dart';
+import 'package:aryegrunzweig/core/services/api_client.dart';
+import 'package:aryegrunzweig/core/services/session_service.dart';
+import 'package:aryegrunzweig/core/services/storage_service.dart';
+import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await StorageService.init();
 
+  final bootstrapClient = ApiClient();
+  final session = await SessionService(apiClient: bootstrapClient).bootstrap();
+  bootstrapClient.close();
+
+  runApp(
+    MyApp(
+      initialRoute: session.isAuthenticated
+          ? AppRoute.appBottomNavBarScreen
+          : AppRoute.onboardingScreen,
+    ),
+  );
+}
