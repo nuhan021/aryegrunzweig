@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+enum AppUserRole { customer, technician }
+
 class AuthController extends GetxController {
+  final currentUserRole = AppUserRole.customer.obs;
 
   // login text field
   final TextEditingController loginEmailController = TextEditingController();
@@ -17,7 +20,8 @@ class AuthController extends GetxController {
   final TextEditingController zipController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController retypePasswordController = TextEditingController();
+  final TextEditingController retypePasswordController =
+      TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   late String countryCode = '';
   late String dialCode = '';
@@ -25,10 +29,9 @@ class AuthController extends GetxController {
   RxBool isRetypePasswordHidden = true.obs;
   RxBool termAndCondition = false.obs;
 
-
-
   // forgot password text field
-  final TextEditingController forgotPasswordEmailController = TextEditingController();
+  final TextEditingController forgotPasswordEmailController =
+      TextEditingController();
 
   // otp field
   String otp = '';
@@ -37,5 +40,26 @@ class AuthController extends GetxController {
 
   void togglePasswordVisibility() {
     isLoginPasswordVisible.value = !isLoginPasswordVisible.value;
+  }
+
+  bool get isTechnician => currentUserRole.value == AppUserRole.technician;
+
+  void setRoleFromBackend(String? role) {
+    final normalizedRole = role?.trim().toLowerCase();
+    currentUserRole.value =
+        normalizedRole == 'technician' ||
+            normalizedRole == 'technical' ||
+            normalizedRole == 'tech'
+        ? AppUserRole.technician
+        : AppUserRole.customer;
+  }
+
+  void prepareLocalDemoRole() {
+    final email = loginEmailController.text.trim().toLowerCase();
+    setRoleFromBackend(
+      email.contains('technician') || email.contains('tech')
+          ? 'technician'
+          : 'customer',
+    );
   }
 }

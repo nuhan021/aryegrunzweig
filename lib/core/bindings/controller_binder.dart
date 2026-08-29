@@ -1,5 +1,3 @@
-
-
 import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
 import 'package:aryegrunzweig/features/home/controller/home_controller.dart';
@@ -10,24 +8,17 @@ class ControllerBinder extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<OnboardingController>(
-          () => OnboardingController(),
+      () => OnboardingController(),
       fenix: true,
     );
 
-    Get.lazyPut<AuthController>(
-          () => AuthController(),
-      fenix: true,
-    );
+    Get.put<AuthController>(AuthController(), permanent: true);
 
     Get.lazyPut<AppBottomNavBarController>(
-          () => AppBottomNavBarController(),
+      () => AppBottomNavBarController(),
       fenix: true,
     );
 
-    Get.lazyPut<HomeController>(
-          () => HomeController(),
-      fenix: true,
-    );
-
+    Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
   }
 }

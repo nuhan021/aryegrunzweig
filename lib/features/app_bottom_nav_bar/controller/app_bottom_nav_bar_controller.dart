@@ -13,9 +13,14 @@ class AppBottomNavBarController extends GetxController {
     currentIndex.value = index;
   }
 
-
   //change screen
   void jumpToScreen(int index) {
+    currentIndex.value = index;
     controller.jumpToTab(index);
+  }
+
+  void resetToFirstTab() {
+    currentIndex.value = 0;
+    controller.jumpToTab(0);
   }
 }

@@ -1,13 +1,14 @@
 import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
+import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
 import 'package:aryegrunzweig/features/home/views/screens/home_screen.dart';
 import 'package:aryegrunzweig/features/orders/views/screens/my_orders_screen.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/views/screens/view_profile_screen.dart';
 import 'package:aryegrunzweig/features/services/views/screens/services_screen.dart';
 import 'package:aryegrunzweig/features/shop/views/screens/shop_screen.dart';
+import 'package:aryegrunzweig/features/technician/navigation/technician_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 
 import '../../../core/common/styles/global_text_style.dart';
@@ -19,6 +20,7 @@ class AppBottomNavBar extends StatelessWidget {
 
   final AppBottomNavBarController controller =
       Get.find<AppBottomNavBarController>();
+  final AuthController authController = Get.find<AuthController>();
 
   List<Widget> _buildScreens() {
     return [
@@ -93,15 +95,16 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PersistentTabView(
-      controller: controller.controller,
-
-      tabs: _tabs(),
-      navBarBuilder: (navBarConfig) =>
-          Style1BottomNavBar(navBarConfig: navBarConfig, height: 68.h),
-      onTabChanged: (index) {
-        controller.changeCurrentIndex(index);
-      },
+    return Obx(
+      () => authController.isTechnician
+          ? TechnicianBottomNavBar(controller: controller)
+          : PersistentTabView(
+              controller: controller.controller,
+              tabs: _tabs(),
+              navBarBuilder: (navBarConfig) =>
+                  Style1BottomNavBar(navBarConfig: navBarConfig, height: 68.h),
+              onTabChanged: controller.changeCurrentIndex,
+            ),
     );
   }
 }

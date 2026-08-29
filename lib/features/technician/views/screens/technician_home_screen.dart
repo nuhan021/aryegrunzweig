@@ -1,0 +1,645 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import '../../../../core/common/styles/global_text_style.dart';
+import '../../../../core/utils/constants/colors.dart';
+import '../../controller/technician_jobs_controller.dart';
+import 'technician_job_details_screen.dart';
+import 'technician_service_report_screen.dart';
+
+class TechnicianHomeScreen extends StatelessWidget {
+  const TechnicianHomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.isRegistered<TechnicianJobsController>()
+        ? Get.find<TechnicianJobsController>()
+        : Get.put(TechnicianJobsController());
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const _DashboardHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 28.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Obx(() {
+                      final isInProgress =
+                          controller.status.value ==
+                          TechnicianJobStatus.inProgress;
+                      final isCompleted =
+                          controller.status.value ==
+                          TechnicianJobStatus.completed;
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: _StatCard(
+                                  value: '03',
+                                  label: 'Jobs today',
+                                  icon: Icons.work_outline_rounded,
+                                  backgroundColor: Color(0xFFEDF5FF),
+                                  accentColor: Color(0xFF174EA6),
+                                ),
+                              ),
+                              12.horizontalSpace,
+                              Expanded(
+                                child: _StatCard(
+                                  value: isInProgress ? '01' : '00',
+                                  label: 'In progress',
+                                  icon: Icons.query_stats_rounded,
+                                  backgroundColor: const Color(0xFFFFFAE9),
+                                  accentColor: const Color(0xFFE28700),
+                                ),
+                              ),
+                            ],
+                          ),
+                          12.verticalSpace,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _StatCard(
+                                  value: isCompleted ? '13' : '12',
+                                  label: 'Completed this month',
+                                  icon: Icons.checklist_rounded,
+                                  backgroundColor: const Color(0xFFECFBF5),
+                                  accentColor: const Color(0xFF0B9E72),
+                                ),
+                              ),
+                              12.horizontalSpace,
+                              const Expanded(
+                                child: _StatCard(
+                                  value: '4.9',
+                                  label: 'Avg. customer rating',
+                                  icon: Icons.star_outline_rounded,
+                                  backgroundColor: Color(0xFFF5F0FF),
+                                  accentColor: Color(0xFF7A3FF2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    }),
+                    28.verticalSpace,
+                    Text(
+                      "Today's Jobs",
+                      style: getTextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF172231),
+                      ),
+                    ),
+                    16.verticalSpace,
+                    Obx(() {
+                      final status = controller.status.value;
+                      final statusText = switch (status) {
+                        TechnicianJobStatus.assigned => 'Assigned',
+                        TechnicianJobStatus.inProgress => 'In Progress',
+                        TechnicianJobStatus.completed => 'Completed',
+                      };
+                      return _TodayJobCard(
+                        status: statusText,
+                        time: '9:00 AM',
+                        customer: controller.job.customerName,
+                        service: controller.job.serviceName,
+                        address: controller.job.address,
+                        issue:
+                            'Unit turns on but there is very low suction throughout the home.',
+                        primaryAction: status == TechnicianJobStatus.completed
+                            ? 'View Job'
+                            : 'Open Job',
+                        secondaryAction: 'Update Report',
+                        onPrimary: () => _openJob(context, controller),
+                        onSecondary: () => _openReport(context, controller),
+                      );
+                    }),
+                    14.verticalSpace,
+                    _TodayJobCard(
+                      status: 'SCHEDULED',
+                      time: '12:30 PM',
+                      customer: 'David Chen',
+                      service: 'Low Suction',
+                      address: '55 Park Avenue, Montréal',
+                      issue:
+                          'Customer reports low suction on the first floor and basement.',
+                      primaryAction: 'View details',
+                      onPrimary: () => _showMessage(
+                        context,
+                        'David Chen job details are not available yet.',
+                      ),
+                    ),
+                    14.verticalSpace,
+                    _TodayJobCard(
+                      status: 'SCHEDULED',
+                      time: '03:30 PM',
+                      customer: 'Amelia Roberts',
+                      service: 'Broken Inlet Valve',
+                      address: '909 Rue Sherbrooke O., Montréal',
+                      issue:
+                          'Inlet valve in the living room is cracked and no longer seals properly.',
+                      primaryAction: 'View details',
+                      onPrimary: () => _showMessage(
+                        context,
+                        'Amelia Roberts job details are not available yet.',
+                      ),
+                    ),
+                    16.verticalSpace,
+                    _UpNextCard(
+                      onCall: () => _showMessage(
+                        context,
+                        'Calling David Chen: (514) 555-0142',
+                      ),
+                      onDirections: () => _showMessage(
+                        context,
+                        'Opening directions to 55 Park Avenue, Montréal',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openJob(BuildContext context, TechnicianJobsController controller) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TechnicianJobDetailsScreen(controller: controller),
+      ),
+    );
+  }
+
+  void _openReport(BuildContext context, TechnicianJobsController controller) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TechnicianServiceReportScreen(controller: controller),
+      ),
+    );
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.fromLTRB(16.w, 22.h, 16.w, 24.h),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(12.r)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Friday, August 01',
+                  style: getTextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                  ),
+                ),
+                5.verticalSpace,
+                Text(
+                  'Good Morning, Marc',
+                  style: getTextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.white,
+                size: 28.sp,
+              ),
+              Positioned(
+                top: -1.h,
+                right: 0,
+                child: Container(
+                  height: 8.w,
+                  width: 8.w,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF3B45),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.backgroundColor,
+    required this.accentColor,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color backgroundColor;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 66.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 34.w,
+            width: 34.w,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 19.sp, color: Colors.white),
+          ),
+          9.horizontalSpace,
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: getTextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: getTextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF667C9B),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayJobCard extends StatelessWidget {
+  const _TodayJobCard({
+    required this.status,
+    required this.time,
+    required this.customer,
+    required this.service,
+    required this.address,
+    required this.issue,
+    required this.primaryAction,
+    required this.onPrimary,
+    this.secondaryAction,
+    this.onSecondary,
+  });
+
+  final String status;
+  final String time;
+  final String customer;
+  final String service;
+  final String address;
+  final String issue;
+  final String primaryAction;
+  final VoidCallback onPrimary;
+  final String? secondaryAction;
+  final VoidCallback? onSecondary;
+
+  @override
+  Widget build(BuildContext context) {
+    final inProgress = status.toLowerCase().contains('progress');
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: inProgress
+                      ? const Color(0xFFFFF4CE)
+                      : const Color(0xFFF2F7FD),
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(
+                    color: inProgress
+                        ? const Color(0xFFFFD65A)
+                        : AppColors.primary,
+                  ),
+                ),
+                child: Text(
+                  status,
+                  style: getTextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w600,
+                    color: inProgress
+                        ? const Color(0xFFD48500)
+                        : AppColors.primary,
+                  ),
+                ),
+              ),
+              Text(
+                time,
+                style: getTextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          10.verticalSpace,
+          Text(
+            customer,
+            style: getTextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF172231),
+            ),
+          ),
+          4.verticalSpace,
+          Text(
+            service,
+            style: getTextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF92A7C5),
+            ),
+          ),
+          4.verticalSpace,
+          Text(
+            address,
+            style: getTextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF667C9B),
+              textAlign: TextAlign.left,
+            ),
+          ),
+          12.verticalSpace,
+          Container(
+            width: double.maxFinite,
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F6FD),
+              borderRadius: BorderRadius.circular(7.r),
+            ),
+            child: Text(
+              issue,
+              style: getTextStyle(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF667C9B),
+                lineHeight: 1.4,
+                textAlign: TextAlign.left,
+              ).copyWith(fontStyle: FontStyle.italic),
+            ),
+          ),
+          12.verticalSpace,
+          Row(
+            children: [
+              Expanded(
+                child: _DashboardAction(
+                  label: primaryAction,
+                  onTap: onPrimary,
+                  isPrimary: true,
+                ),
+              ),
+              if (secondaryAction != null && onSecondary != null) ...[
+                12.horizontalSpace,
+                Expanded(
+                  child: _DashboardAction(
+                    label: secondaryAction!,
+                    onTap: onSecondary!,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardAction extends StatelessWidget {
+  const _DashboardAction({
+    required this.label,
+    required this.onTap,
+    this.isPrimary = false,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final bool isPrimary;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isPrimary ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: AppColors.primary),
+        ),
+        child: Text(
+          label,
+          style: getTextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w500,
+            color: isPrimary ? Colors.white : AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UpNextCard extends StatelessWidget {
+  const _UpNextCard({required this.onCall, required this.onDirections});
+
+  final VoidCallback onCall;
+  final VoidCallback onDirections;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(13.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(5.r),
+                ),
+                child: Text(
+                  'UP NEXT',
+                  style: getTextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              Text(
+                '12:30 PM',
+                style: getTextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          10.verticalSpace,
+          Text(
+            'David Chen',
+            style: getTextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          4.verticalSpace,
+          Text(
+            'Low Suction · Est. 1 hour',
+            style: getTextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+            ),
+          ),
+          4.verticalSpace,
+          Text(
+            '55 Park Avenue, Montréal',
+            style: getTextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+            ),
+          ),
+          14.verticalSpace,
+          Row(
+            children: [
+              Expanded(
+                child: _UpNextAction(label: 'Call customer', onTap: onCall),
+              ),
+              12.horizontalSpace,
+              Expanded(
+                child: _UpNextAction(
+                  label: 'Get directions',
+                  onTap: onDirections,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpNextAction extends StatelessWidget {
+  const _UpNextAction({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        ),
+        child: Text(
+          label,
+          style: getTextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
