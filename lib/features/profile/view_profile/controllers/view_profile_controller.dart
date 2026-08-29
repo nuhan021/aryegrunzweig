@@ -1,6 +1,8 @@
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:get/get.dart';
 
+import '../../../auth/controller/auth_controller.dart';
+
 class ViewProfileController extends GetxController {
   // Observable variables for dynamic updates
   var userName = 'John Doe'.obs;
@@ -52,10 +54,8 @@ class ViewProfileController extends GetxController {
     Get.toNamed(AppRoute.termsPrivacyScreen);
   }
 
-  void handleLogout() {
-    // 1. Clear local storage
-    // 2. Clear authentication tokens
-    // 3. Navigate to login screen
+  Future<void> handleLogout() async {
+    await Get.find<AuthController>().logout();
     Get.offAllNamed(AppRoute.loginScreen);
   }
 }

@@ -10,14 +10,23 @@ enum SessionBootstrapStatus {
 }
 
 class SessionBootstrapResult {
-  const SessionBootstrapResult({required this.status, this.role});
+  const SessionBootstrapResult({
+    required this.status,
+    this.role,
+    this.technicianVerificationStatus,
+  });
 
   final SessionBootstrapStatus status;
   final String? role;
+  final String? technicianVerificationStatus;
 
   bool get isAuthenticated =>
       status == SessionBootstrapStatus.authenticated ||
       status == SessionBootstrapStatus.authenticatedOffline;
+
+  bool get canOpenRoleHome =>
+      role == 'CUSTOMER' ||
+      (role == 'TECHNICIAN' && technicianVerificationStatus == 'VERIFIED');
 }
 
 class SessionService {
@@ -46,11 +55,16 @@ class SessionService {
       final profile = _unwrapMap(response.responseData as Map);
       final role = profile['role']?.toString().toUpperCase();
       final userId = profile['id']?.toString();
+      final technician = profile['technician'];
+      final verificationStatus = technician is Map
+          ? technician['verificationStatus']?.toString().toUpperCase()
+          : null;
       if (_isMobileRole(role)) {
         await _sessionStore.updateIdentity(userId: userId, userRole: role);
         return SessionBootstrapResult(
           status: SessionBootstrapStatus.authenticated,
           role: role,
+          technicianVerificationStatus: verificationStatus,
         );
       }
       await _sessionStore.clear();

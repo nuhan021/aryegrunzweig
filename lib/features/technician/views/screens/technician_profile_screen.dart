@@ -6,6 +6,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
+import '../../../auth/controller/auth_controller.dart';
 import '../../../profile/edit_profile/views/screens/edit_profile_screen.dart';
 
 class TechnicianProfileScreen extends StatelessWidget {
@@ -49,9 +50,7 @@ class TechnicianProfileScreen extends StatelessWidget {
                         ),
                       ),
                       190.verticalSpace,
-                      _LogoutButton(
-                        onTap: () => Get.offAllNamed(AppRoute.loginScreen),
-                      ),
+                      _LogoutButton(onTap: () => _logout()),
                     ],
                   ),
                 ),
@@ -67,6 +66,11 @@ class TechnicianProfileScreen extends StatelessWidget {
     if (Get.isRegistered<AppBottomNavBarController>()) {
       Get.find<AppBottomNavBarController>().jumpToScreen(0);
     }
+  }
+
+  Future<void> _logout() async {
+    await Get.find<AuthController>().logout();
+    Get.offAllNamed(AppRoute.loginScreen);
   }
 }
 

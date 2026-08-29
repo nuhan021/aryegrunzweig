@@ -1,35 +1,33 @@
-import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
-import 'package:aryegrunzweig/core/common/widgets/custom_button.dart';
-import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
-import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/common/styles/global_text_style.dart';
+import '../../../../core/common/widgets/custom_button.dart';
+import '../../../../core/utils/constants/icon_path.dart';
+import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
+import '../../controller/auth_controller.dart';
+
 class AccountCreateSuccessScreen extends StatelessWidget {
-  const AccountCreateSuccessScreen({super.key});
+  AccountCreateSuccessScreen({super.key});
+
+  final AuthController controller = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-      ),
+      appBar: AppBar(backgroundColor: Colors.white),
       body: Column(
         children: [
           Expanded(
-            child: Container(
-              color: Colors.white,
-              alignment: AlignmentGeometry.center,
-              child: Image.asset(IconPath.logo, width: 158.w,),
-            ),
+            child: Center(child: Image.asset(IconPath.logo, width: 158.w)),
           ),
-
           Container(
             height: 433.h,
+            padding: EdgeInsets.symmetric(horizontal: 25.w),
             decoration: BoxDecoration(
               color: Colors.black,
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(20.r), topRight: Radius.circular(20.r))
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -40,33 +38,50 @@ class AccountCreateSuccessScreen extends StatelessWidget {
                   style: getTextStyle(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white
+                    color: Colors.white,
                   ),
                 ),
-
                 25.verticalSpace,
-
                 Text(
-                  'you can now enjoy the ELITE service for your central vacuum system',
+                  controller.isTechnician
+                      ? 'Your technician account will be available after verification.'
+                      : 'Your account is ready to use.',
                   textAlign: TextAlign.center,
                   style: getTextStyle(
                     fontSize: 12.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white.withOpacity(0.8)
+                    color: Colors.white.withValues(alpha: .8),
                   ),
                 ),
-
                 65.verticalSpace,
-
                 SizedBox(
-                  width: 180.w,
-                  child: CustomButton(text: 'Let\'s Explore', onPressed: () => Get.offAllNamed(AppRoute.getLoginScreen())),
-                )
+                  width: 190.w,
+                  child: Obx(
+                    () => CustomButton(
+                      text: controller.isSubmitting.value
+                          ? 'Please wait...'
+                          : 'Let\'s Explore',
+                      onPressed: () => _continue(context),
+                    ),
+                  ),
+                ),
               ],
-            ).paddingSymmetric(horizontal: 25.w),
-          )
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _continue(BuildContext context) async {
+    final success = await controller.completeOnboarding();
+    if (!context.mounted) return;
+    if (!success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+      return;
+    }
+    Get.find<AppBottomNavBarController>().resetToFirstTab();
+    Get.offAllNamed(controller.authenticatedDestination);
   }
 }

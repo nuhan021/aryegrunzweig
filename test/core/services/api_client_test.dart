@@ -202,6 +202,32 @@ void main() {
       expect(result.role, 'CUSTOMER');
       expect(store.wasCleared, isFalse);
     });
+
+    test('keeps an unverified technician out of the technician home', () async {
+      final store = _FakeSessionStore(
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      );
+      final client = ApiClient(
+        baseUrl: 'https://example.test',
+        sessionStore: store,
+        httpClient: MockClient(
+          (_) async => http.Response(
+            '{"id":"tech-1","role":"TECHNICIAN","technician":{"verificationStatus":"PENDING_VERIFICATION"}}',
+            200,
+          ),
+        ),
+      );
+
+      final result = await SessionService(
+        apiClient: client,
+        sessionStore: store,
+      ).bootstrap();
+
+      expect(result.isAuthenticated, isTrue);
+      expect(result.canOpenRoleHome, isFalse);
+      expect(result.technicianVerificationStatus, 'PENDING_VERIFICATION');
+    });
   });
 }
 

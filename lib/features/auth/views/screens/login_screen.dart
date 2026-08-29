@@ -133,13 +133,13 @@ class LoginScreen extends StatelessWidget {
               7.verticalSpace,
 
               // login button
-              CustomButton(
-                text: 'Login',
-                onPressed: () {
-                  controller.prepareLocalDemoRole();
-                  Get.find<AppBottomNavBarController>().resetToFirstTab();
-                  Get.offAllNamed(AppRoute.appBottomNavBarScreen);
-                },
+              Obx(
+                () => CustomButton(
+                  text: controller.isSubmitting.value
+                      ? 'Logging in...'
+                      : 'Login',
+                  onPressed: () => _login(context),
+                ),
               ),
 
               25.verticalSpace,
@@ -155,5 +155,18 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _login(BuildContext context) async {
+    final success = await controller.login();
+    if (!context.mounted) return;
+    if (!success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+      return;
+    }
+    Get.find<AppBottomNavBarController>().resetToFirstTab();
+    Get.offAllNamed(controller.authenticatedDestination);
   }
 }

@@ -6,7 +6,6 @@ import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../core/common/widgets/custom_text_field.dart';
 import '../../controller/auth_controller.dart';
@@ -52,7 +51,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               style: getTextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: .6),
               ),
             ),
 
@@ -81,13 +80,30 @@ class ForgotPasswordScreen extends StatelessWidget {
 
             25.verticalSpace,
 
-            CustomButton(
-              text: 'Request Code',
-              onPressed: () => Get.toNamed(AppRoute.otpScreen),
+            Obx(
+              () => CustomButton(
+                text: controller.isSubmitting.value
+                    ? 'Requesting...'
+                    : 'Request Code',
+                onPressed: () => _requestCode(context),
+              ),
             ),
           ],
         ).paddingSymmetric(horizontal: 26.w),
       ),
     );
+  }
+
+  Future<void> _requestCode(BuildContext context) async {
+    final success = await controller.requestPasswordReset();
+    if (!context.mounted) return;
+    if (success) {
+      controller.otp = '';
+      Get.toNamed(AppRoute.resetPasswordScreen);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+    }
   }
 }

@@ -15,6 +15,8 @@ import '../features/auth/views/screens/account_create_success_screen.dart';
 import '../features/auth/views/screens/forgot_password_screen.dart';
 import '../features/auth/views/screens/login_screen.dart';
 import '../features/auth/views/screens/sign_up_screen.dart';
+import '../features/auth/views/screens/reset_password_screen.dart';
+import '../features/auth/views/screens/technician_approval_pending_screen.dart';
 import '../features/onboarding/views/screens/onboarding_screen.dart';
 
 class AppRoute {
@@ -24,6 +26,9 @@ class AppRoute {
   static String otpScreen = "/otpScreen";
   static String signUpScreen = "/signUpScreen";
   static String accountCreateSuccessScreen = "/accountCreateSuccessScreen";
+  static String resetPasswordScreen = "/resetPasswordScreen";
+  static String technicianApprovalPendingScreen =
+      "/technicianApprovalPendingScreen";
   static String appBottomNavBarScreen = "/appBottomNavBarScreen";
   static String viewProfileScreen = "/viewProfileScreen";
   static String editProfileScreen = "/editProfileScreen";
@@ -60,6 +65,11 @@ class AppRoute {
     GetPage(name: forgotPasswordScreen, page: () => ForgotPasswordScreen()),
     GetPage(name: otpScreen, page: () => OtpScreen()),
     GetPage(name: signUpScreen, page: () => SignUpScreen()),
+    GetPage(name: resetPasswordScreen, page: () => ResetPasswordScreen()),
+    GetPage(
+      name: technicianApprovalPendingScreen,
+      page: () => TechnicianApprovalPendingScreen(),
+    ),
     GetPage(
       name: accountCreateSuccessScreen,
       page: () => AccountCreateSuccessScreen(),

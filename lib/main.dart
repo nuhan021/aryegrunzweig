@@ -16,7 +16,9 @@ Future<void> main() async {
   runApp(
     MyApp(
       initialRoute: session.isAuthenticated
-          ? AppRoute.appBottomNavBarScreen
+          ? session.canOpenRoleHome
+                ? AppRoute.appBottomNavBarScreen
+                : AppRoute.technicianApprovalPendingScreen
           : AppRoute.onboardingScreen,
     ),
   );

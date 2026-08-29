@@ -1,25 +1,28 @@
-import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
-import 'package:aryegrunzweig/core/common/widgets/custom_button.dart';
-import 'package:aryegrunzweig/core/utils/constants/colors.dart';
-import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
-import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/common/styles/global_text_style.dart';
+import '../../../../core/common/widgets/custom_button.dart';
 import '../../../../core/common/widgets/custom_text_field.dart';
+import '../../../../core/utils/constants/colors.dart';
+import '../../../../routes/app_routes.dart';
+import '../../controller/auth_controller.dart';
+import '../../models/auth_models.dart';
 
 class SignUpScreen extends StatelessWidget {
   SignUpScreen({super.key});
+
   final AuthController controller = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(backgroundColor: Colors.white),
-
       body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(26.w, 0, 26.w, 40.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -31,218 +34,314 @@ class SignUpScreen extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
-
-            10.verticalSpace,
-
+            8.verticalSpace,
             Text(
-              'Get the best out of derleng by creating an account',
+              'Choose your role and enter the required account details.',
               style: getTextStyle(
                 fontSize: 12.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: .55),
+                textAlign: TextAlign.left,
               ),
             ),
-
-            20.verticalSpace,
-
-            // first name
-            SignUpTextField(
-              textController: controller.firstNameController,
-              hintText: 'John',
-              title: 'First Name',
+            22.verticalSpace,
+            Obx(
+              () => _RoleSelector(
+                selectedRole: controller.selectedSignupRole.value,
+                onSelected: controller.selectSignupRole,
+              ),
             ),
-
-            // last name
-            SignUpTextField(
-              textController: controller.lastNameController,
-              hintText: 'John',
-              title: 'First Name',
+            24.verticalSpace,
+            Row(
+              children: [
+                Expanded(
+                  child: SignUpTextField(
+                    textController: controller.firstNameController,
+                    hintText: 'Alex',
+                    title: 'First name *',
+                  ),
+                ),
+                12.horizontalSpace,
+                Expanded(
+                  child: SignUpTextField(
+                    textController: controller.lastNameController,
+                    hintText: 'Morgan',
+                    title: 'Last name *',
+                  ),
+                ),
+              ],
             ),
-
-            // phone number
+            Text(
+              'Phone number *',
+              style: getTextStyle(fontSize: 13.sp, textAlign: TextAlign.left),
+            ),
+            9.verticalSpace,
             Row(
               children: [
                 Container(
+                  height: 52.h,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.black.withOpacity(0.1)),
+                    border: Border.all(color: Colors.black12),
                   ),
                   child: CountryCodePicker(
                     initialSelection: controller.countryCode,
+                    favorite: const ['CA', 'US'],
                     onChanged: (value) {
-                      controller.countryCode = value.code!;
-                      controller.dialCode = value.dialCode!.toString();
+                      controller.countryCode = value.code ?? 'CA';
+                      controller.dialCode = value.dialCode ?? '+1';
                     },
                   ),
                 ),
-                5.horizontalSpace,
+                8.horizontalSpace,
                 Expanded(
                   child: CustomTextField(
                     controller: controller.phoneNumberController,
-                    hintText: '123 456 789',
+                    hintText: '416 555 0100',
                     inputType: TextInputType.phone,
                   ),
                 ),
               ],
             ),
-
             20.verticalSpace,
-
-            // address
             SignUpTextField(
               textController: controller.addressController,
-              hintText: 'Address',
-              title: 'Address',
+              hintText: '123 Main Street',
+              title: 'Address *',
             ),
-
-            // address
-            SignUpTextField(
-              textController: controller.addressController,
-              hintText: 'Address',
-              title: 'Address',
-            ),
-
-            // apt
             SignUpTextField(
               textController: controller.aptController,
-              hintText: 'Apartment Number',
-              title: 'APT',
+              hintText: 'Unit 4B',
+              title: 'Apartment (optional)',
             ),
-
-            // city
-            SignUpTextField(
-              textController: controller.cityController,
-              hintText: 'City Name',
-              title: 'City',
+            Row(
+              children: [
+                Expanded(
+                  child: SignUpTextField(
+                    textController: controller.cityController,
+                    hintText: 'Toronto',
+                    title: 'City *',
+                  ),
+                ),
+                12.horizontalSpace,
+                Expanded(
+                  child: SignUpTextField(
+                    textController: controller.stateController,
+                    hintText: 'ON',
+                    title: 'State *',
+                  ),
+                ),
+              ],
             ),
-
-            // state
-            SignUpTextField(
-              textController: controller.stateController,
-              hintText: 'State',
-              title: 'State',
-            ),
-
-            // zip
             SignUpTextField(
               textController: controller.zipController,
-              hintText: 'Zip code',
-              title: 'Zip',
+              hintText: 'M5V 2T6',
+              title: 'Zip code *',
             ),
-
-            // email
             SignUpTextField(
               textController: controller.emailController,
-              hintText: 'info@gmail.com',
-              title: 'Email',
+              hintText: 'alex@example.com',
+              title: 'Email *',
               type: TextInputType.emailAddress,
             ),
-
-            // password
-            Obx(() {
-              return SignUpTextField(
+            Obx(
+              () => SignUpTextField(
                 textController: controller.passwordController,
-                hintText: 'Enter your Strong Password',
-                title: 'Password',
-                isObsecure: controller.isPasswordHidden.value,
+                hintText: 'Minimum 8 characters',
+                title: 'Password *',
+                isObscure: controller.isPasswordHidden.value,
                 suffixIcon: Icon(
                   controller.isPasswordHidden.value
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: Colors.grey,
                 ),
-                // This matches the renamed parameter
-                onSuffixTap: () => controller.isPasswordHidden.toggle(),
-              );
-            }),
-
-            // password
-            Obx(() {
-              return SignUpTextField(
+                onSuffixTap: controller.isPasswordHidden.toggle,
+              ),
+            ),
+            Obx(
+              () => SignUpTextField(
                 textController: controller.retypePasswordController,
-                hintText: 'Enter your Strong Password Again',
-                title: 'Re-type Password',
-                isObsecure: controller.isRetypePasswordHidden.value,
+                hintText: 'Enter password again',
+                title: 'Confirm password *',
+                isObscure: controller.isRetypePasswordHidden.value,
                 suffixIcon: Icon(
                   controller.isRetypePasswordHidden.value
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: Colors.grey,
                 ),
-                // This matches the renamed parameter
-                onSuffixTap: () => controller.isRetypePasswordHidden.toggle(),
-              );
-            }),
-
-            // terms and condition
+                onSuffixTap: controller.isRetypePasswordHidden.toggle,
+              ),
+            ),
+            Obx(
+              () => controller.isTechnicianSignup
+                  ? _TechnicianFields(controller: controller)
+                  : const SizedBox.shrink(),
+            ),
             GestureDetector(
-              onTap: () => controller.termAndCondition.value = !controller.termAndCondition.value,
+              onTap: controller.termAndCondition.toggle,
               child: Row(
                 children: [
-                  Obx(() {
-                    return Icon(
+                  Obx(
+                    () => Icon(
                       controller.termAndCondition.value
                           ? Icons.check_box_rounded
                           : Icons.check_box_outline_blank,
                       color: AppColors.primary,
-                    );
-                  }),
-
-                  10.horizontalSpace,
-
-                  Text(
-                    'I accept term and condition',
-                    style: getTextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ).copyWith(
-                      decoration: TextDecoration.underline,
-                      decorationColor: AppColors.primary,
-                      decorationThickness: 1.5,
                     ),
-                  )
+                  ),
+                  10.horizontalSpace,
+                  Expanded(
+                    child: Text(
+                      'I accept the terms and conditions *',
+                      style: getTextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.primary,
+                        textAlign: TextAlign.left,
+                      ).copyWith(decoration: TextDecoration.underline),
+                    ),
+                  ),
                 ],
               ),
             ),
-
-            30.verticalSpace,
-
-            Align(
-              alignment: Alignment.center, // Changed to Alignment.center for simplicity
-              child: GestureDetector(
-                onTap: () => Get.offAllNamed(AppRoute.getLoginScreen()),
-                child: Text.rich(
-                  TextSpan(
-                    text: 'Already have an account? ',
-                    style: getTextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Go back',
-                        style: getTextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.bold, // Making this part bold
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            28.verticalSpace,
+            Obx(
+              () => CustomButton(
+                text: controller.isSubmitting.value
+                    ? 'Creating account...'
+                    : 'Create Account',
+                onPressed: () => _submit(context),
               ),
             ),
-
             20.verticalSpace,
-
-            CustomButton(text: 'Create Account', onPressed: () => Get.toNamed(AppRoute.getOtpScreen())),
-
-            40.verticalSpace,
+            Center(
+              child: TextButton(
+                onPressed: () => Get.offAllNamed(AppRoute.loginScreen),
+                child: const Text('Already have an account? Log in'),
+              ),
+            ),
           ],
-        ).paddingSymmetric(horizontal: 26.w),
+        ),
       ),
+    );
+  }
+
+  Future<void> _submit(BuildContext context) async {
+    final success = await controller.signup();
+    if (!context.mounted) return;
+    if (success) {
+      Get.toNamed(AppRoute.otpScreen);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+    }
+  }
+}
+
+class _RoleSelector extends StatelessWidget {
+  const _RoleSelector({required this.selectedRole, required this.onSelected});
+
+  final UserRole selectedRole;
+  final ValueChanged<UserRole> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46.h,
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F5F9),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          _roleButton('Customer', UserRole.customer),
+          _roleButton('Technician', UserRole.technician),
+        ],
+      ),
+    );
+  }
+
+  Widget _roleButton(String label, UserRole role) {
+    final selected = selectedRole == role;
+    return Expanded(
+      child: InkWell(
+        onTap: () => onSelected(role),
+        borderRadius: BorderRadius.circular(9.r),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(9.r),
+          ),
+          child: Text(
+            label,
+            style: getTextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
+              color: selected ? Colors.white : Colors.black54,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TechnicianFields extends StatelessWidget {
+  const _TechnicianFields({required this.controller});
+
+  final AuthController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(bottom: 16.h),
+          child: Text(
+            'Technician information',
+            style: getTextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+              textAlign: TextAlign.left,
+            ),
+          ),
+        ),
+        SignUpTextField(
+          textController: controller.serviceAreaController,
+          hintText: 'Greater Toronto Area',
+          title: 'Service area *',
+        ),
+        SignUpTextField(
+          textController: controller.skillsController,
+          hintText: 'Repair, Installation',
+          title: 'Skills, comma separated *',
+        ),
+        SignUpTextField(
+          textController: controller.employeeIdController,
+          hintText: 'TECH-1001',
+          title: 'Employee ID (optional)',
+        ),
+        SignUpTextField(
+          textController: controller.licenseNumberController,
+          hintText: 'LIC-123456',
+          title: 'License number (optional)',
+        ),
+        SignUpTextField(
+          textController: controller.yearsExperienceController,
+          hintText: '6',
+          title: 'Years of experience (optional)',
+          type: TextInputType.number,
+        ),
+        SignUpTextField(
+          textController: controller.bioController,
+          hintText: 'Certified central vacuum technician.',
+          title: 'Bio (optional)',
+          maxLines: 3,
+        ),
+      ],
     );
   }
 }
@@ -252,45 +351,46 @@ class SignUpTextField extends StatelessWidget {
     super.key,
     required this.textController,
     required this.hintText,
-    this.type = TextInputType.text,
     required this.title,
-    this.isObsecure = false,
-    this.onSuffixTap, // Renamed for clarity
+    this.type = TextInputType.text,
+    this.isObscure = false,
+    this.onSuffixTap,
     this.suffixIcon,
+    this.maxLines = 1,
   });
 
   final String title;
   final TextEditingController textController;
   final String hintText;
   final TextInputType type;
-  final bool isObsecure;
-  final VoidCallback? onSuffixTap; // Logic for the eye icon
+  final bool isObscure;
+  final VoidCallback? onSuffixTap;
   final Widget? suffixIcon;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: getTextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w400,
-            color: Colors.black,
+    return Padding(
+      padding: EdgeInsets.only(bottom: 18.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: getTextStyle(fontSize: 13.sp, textAlign: TextAlign.left),
           ),
-        ),
-        10.verticalSpace,
-        CustomTextField(
-          controller: textController,
-          hintText: hintText,
-          inputType: type,
-          obscureText: isObsecure,
-          suffixIcon: suffixIcon,
-          // Use the callback here
-          onSuffixPressed: onSuffixTap,
-        ),
-      ],
-    ).paddingOnly(bottom: 20.h);
+          9.verticalSpace,
+          CustomTextField(
+            controller: textController,
+            hintText: hintText,
+            inputType: type,
+            obscureText: isObscure,
+            suffixIcon: suffixIcon,
+            onSuffixPressed: onSuffixTap,
+            maxLine: isObscure ? 1 : maxLines,
+          ),
+        ],
+      ),
+    );
   }
 }
