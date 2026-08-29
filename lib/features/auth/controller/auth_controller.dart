@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/storage_service.dart';
+
 enum AppUserRole { customer, technician }
 
 class AuthController extends GetxController {
@@ -37,6 +39,12 @@ class AuthController extends GetxController {
   String otp = '';
 
   var isLoginPasswordVisible = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    setRoleFromBackend(StorageService.userRole);
+  }
 
   void togglePasswordVisibility() {
     isLoginPasswordVisible.value = !isLoginPasswordVisible.value;
