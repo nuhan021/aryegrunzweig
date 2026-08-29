@@ -5,6 +5,7 @@ import 'package:aryegrunzweig/core/common/widgets/custom_text_field.dart';
 import 'package:aryegrunzweig/core/utils/constants/colors.dart';
 import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
 import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
+import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -107,12 +108,12 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
 
-
               // forgot password
               Align(
                 alignment: AlignmentGeometry.centerRight,
                 child: TextButton(
-                  onPressed: () => Get.toNamed(AppRoute.getForgotPasswordScreen()),
+                  onPressed: () =>
+                      Get.toNamed(AppRoute.getForgotPasswordScreen()),
                   child: Text(
                     'Forgot password?',
                     style:
@@ -132,13 +133,23 @@ class LoginScreen extends StatelessWidget {
               7.verticalSpace,
 
               // login button
-              CustomButton(text: 'Login', onPressed: () => Get.offAllNamed(AppRoute.appBottomNavBarScreen)),
+              CustomButton(
+                text: 'Login',
+                onPressed: () {
+                  controller.prepareLocalDemoRole();
+                  Get.find<AppBottomNavBarController>().resetToFirstTab();
+                  Get.offAllNamed(AppRoute.appBottomNavBarScreen);
+                },
+              ),
 
               25.verticalSpace,
 
-              CustomOutLineButton(text: 'Create Account', onPressed: () {
-                Get.toNamed(AppRoute.getSignUpScreen());
-              }),
+              CustomOutLineButton(
+                text: 'Create Account',
+                onPressed: () {
+                  Get.toNamed(AppRoute.getSignUpScreen());
+                },
+              ),
             ],
           ).paddingSymmetric(horizontal: 26.w),
         ),
