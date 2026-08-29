@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
+import '../screens/select_issue_screen.dart';
 
 class HomeQuickActionCards extends StatelessWidget {
   const HomeQuickActionCards({super.key});
@@ -23,8 +25,10 @@ class HomeQuickActionCards extends StatelessWidget {
             titleColor: Colors.white,
             subtitle: 'Get a quote from our team',
             subtitleColor: Colors.white.withOpacity(0.8),
-            onTap: () =>
-                Get.find<AppBottomNavBarController>().jumpToScreen(1),
+            onTap: () => AppHelperFunctions.navigateToScreen(
+              context,
+              SelectIssueScreen(),
+            ),
           ),
         ),
         12.horizontalSpace,
