@@ -1,79 +1,121 @@
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../auth/controller/auth_controller.dart';
+import '../../data/profile_models.dart';
+import '../../data/profile_repository.dart';
 import '../models/help_support_models.dart';
 
 class HelpSupportController extends GetxController {
-  var contactOptions = <ContactOption>[].obs;
-  var faqs = <FAQ>[].obs;
+  final ProfileRepository _repository = Get.find<ProfileRepository>();
+
+  final contactOptions = <ContactOption>[].obs;
+  final faqs = <FAQ>[].obs;
+  final isSubmitting = false.obs;
+  final fullNameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final serviceController = TextEditingController();
+  final messageController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    _loadContactOptions();
-    _loadFAQs();
+    final profile = Get.find<AuthController>().currentProfile.value;
+    if (profile != null) {
+      fullNameController.text = '${profile.firstName} ${profile.lastName}'
+          .trim();
+      emailController.text = profile.email;
+      phoneController.text = profile.phone ?? '';
+    }
+    _loadPublicSettings();
+    _loadFaqs();
   }
 
-  void _loadContactOptions() {
-    contactOptions.addAll([
+  Future<void> _loadPublicSettings() async {
+    final result = await _repository.getPublicSettings();
+    final settings = result.data;
+    contactOptions.assignAll([
       ContactOption(
-        id: '1',
-        title: 'Live Chat',
-        description: 'Chat with our support team',
-        icon: Icons.chat_bubble_outline,
-        iconBackgroundColor: const Color(0x141A73E8),
-        onTap: () {
-          Get.snackbar('Live Chat', 'Opening live chat...');
-        },
-      ),
-      ContactOption(
-        id: '2',
+        id: 'phone',
         title: 'Call Us',
-        description: '+1 (800) 123-4567',
+        description: settings?.officePhone ?? 'Phone not available',
         icon: Icons.phone,
         iconBackgroundColor: const Color(0x1428C76F),
-        onTap: () {
-          Get.snackbar('Call', 'Opening dialer...');
-        },
+        onTap: () => Get.snackbar(
+          'Office phone',
+          settings?.officePhone ?? 'Phone not available',
+        ),
       ),
       ContactOption(
-        id: '3',
+        id: 'email',
         title: 'Email Support',
-        description: 'support@centralvacpro.com',
+        description: settings?.supportEmail ?? 'Email not available',
         icon: Icons.mail_outline,
         iconBackgroundColor: const Color(0x14FF9F43),
-        onTap: () {
-          Get.snackbar('Email', 'Opening email...');
-        },
+        onTap: () => Get.snackbar(
+          'Support email',
+          settings?.supportEmail ?? 'Email not available',
+        ),
       ),
     ]);
   }
 
-  void _loadFAQs() {
-    faqs.addAll([
+  Future<void> submitContact() async {
+    final name = fullNameController.text.trim();
+    final email = emailController.text.trim();
+    final message = messageController.text.trim();
+    if (name.isEmpty || email.isEmpty || message.isEmpty) {
+      Get.snackbar('Error', 'Name, email, and message are required.');
+      return;
+    }
+    if (isSubmitting.value) return;
+    isSubmitting.value = true;
+    final result = await _repository.submitContact(
+      ContactRequest(
+        fullName: name,
+        email: email,
+        phone: _optional(phoneController.text),
+        service: _optional(serviceController.text),
+        message: message,
+      ),
+    );
+    isSubmitting.value = false;
+    if (result.isSuccess && result.data?.success == true) {
+      messageController.clear();
+      Get.snackbar('Success', 'Your message has been sent.');
+    } else {
+      Get.snackbar('Error', result.errorMessage);
+    }
+  }
+
+  String? _optional(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  void _loadFaqs() {
+    faqs.assignAll([
       FAQ(
         id: '1',
         question: 'How do I book a service?',
-        answer:
-            'Simply browse our categories, select a service, and follow the booking steps.',
+        answer: 'Browse service categories and follow the booking steps.',
       ),
       FAQ(
         id: '2',
-        question: 'Can I cancel or reschedule?',
-        answer:
-            'Yes, you can cancel or reschedule up to 2 hours before your appointment.',
-      ),
-      FAQ(
-        id: '3',
-        question: 'How are technicians verified?',
-        answer:
-            'All technicians undergo background checks and are fully licensed and insured.',
-      ),
-      FAQ(
-        id: '4',
-        question: 'What if I need to change my address?',
-        answer:
-            'You can update your address in the Profile section under Saved Addresses.',
+        question: 'How do I change an address?',
+        answer: 'Open Profile, then Saved Addresses.',
       ),
     ]);
+  }
+
+  @override
+  void onClose() {
+    fullNameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    serviceController.dispose();
+    messageController.dispose();
+    super.onClose();
   }
 }

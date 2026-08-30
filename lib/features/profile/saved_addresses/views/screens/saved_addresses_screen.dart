@@ -57,13 +57,7 @@ class SavedAddressesScreen extends StatelessWidget {
                     children: [
                       // Add New Address Button
                       GestureDetector(
-                        onTap: () {
-                          // Navigate to add address screen
-                          Get.snackbar(
-                            'Info',
-                            'Navigate to add address screen',
-                          );
-                        },
+                        onTap: () => controller.openEditor(context),
                         child: Container(
                           width: double.infinity,
                           height: 52.h,
@@ -99,7 +93,11 @@ class SavedAddressesScreen extends StatelessWidget {
 
                       // Address List
                       Obx(
-                        () => controller.addresses.isEmpty
+                        () => controller.isLoading.value
+                            ? const Center(child: CircularProgressIndicator())
+                            : controller.errorMessage.value.isNotEmpty
+                            ? Center(child: Text(controller.errorMessage.value))
+                            : controller.addresses.isEmpty
                             ? Center(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(vertical: 32.h),
@@ -122,8 +120,11 @@ class SavedAddressesScreen extends StatelessWidget {
                                       padding: EdgeInsets.only(bottom: 16.h),
                                       child: AddressCard(
                                         address: address,
-                                        onMenuPressed: () => controller
-                                            .openAddressOptions(address.id),
+                                        onMenuPressed: () =>
+                                            controller.openAddressOptions(
+                                              context,
+                                              address,
+                                            ),
                                       ),
                                     );
                                   },

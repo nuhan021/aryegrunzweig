@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 import '../models/response_data.dart';
 import '../utils/constants/api_constants.dart';
@@ -11,11 +13,17 @@ import 'session_store.dart';
 typedef SessionExpiredCallback = FutureOr<void> Function();
 
 class ApiUploadFile {
-  const ApiUploadFile({required this.field, required this.path, this.filename});
+  const ApiUploadFile({
+    required this.field,
+    required this.path,
+    this.filename,
+    this.contentType,
+  });
 
   final String field;
   final String path;
   final String? filename;
+  final String? contentType;
 }
 
 class ApiClient {
@@ -181,6 +189,11 @@ class ApiClient {
           file.field,
           file.path,
           filename: file.filename,
+          contentType: MediaType.parse(
+            file.contentType ??
+                lookupMimeType(file.path) ??
+                'application/octet-stream',
+          ),
         ),
       );
     }

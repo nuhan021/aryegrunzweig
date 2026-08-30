@@ -8,18 +8,26 @@ import '../../../../routes/app_routes.dart';
 import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import '../../../auth/controller/auth_controller.dart';
 import '../../../profile/edit_profile/views/screens/edit_profile_screen.dart';
+import '../../controller/technician_profile_controller.dart';
 
 class TechnicianProfileScreen extends StatelessWidget {
   const TechnicianProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(TechnicianProfileController());
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            _ProfileHeader(onBack: _goHome),
+            Obx(
+              () => _ProfileHeader(
+                onBack: _goHome,
+                name: controller.fullName,
+                imageUrl: controller.profile.value?.avatarUrl,
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(16.w, 22.h, 16.w, 26.h),
@@ -40,7 +48,47 @@ class TechnicianProfileScreen extends StatelessWidget {
                         ),
                       ),
                       14.verticalSpace,
-                      const _AccountInfoCard(),
+                      Obx(
+                        () => _AccountInfoCard(
+                          rows: [
+                            ('Full name', controller.fullName),
+                            (
+                              'Email address',
+                              controller.profile.value?.email ?? '',
+                            ),
+                            (
+                              'Phone number',
+                              controller.profile.value?.phone ?? '—',
+                            ),
+                            (
+                              'Service area',
+                              controller
+                                      .profile
+                                      .value
+                                      ?.technician
+                                      ?.serviceArea ??
+                                  '—',
+                            ),
+                          ],
+                        ),
+                      ),
+                      14.verticalSpace,
+                      Obx(
+                        () => SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Available for jobs'),
+                          value:
+                              controller
+                                  .profile
+                                  .value
+                                  ?.technician
+                                  ?.isAvailable ??
+                              false,
+                          onChanged: controller.isUpdatingAvailability.value
+                              ? null
+                              : controller.setAvailability,
+                        ),
+                      ),
                       46.verticalSpace,
                       _EditProfileButton(
                         onTap: () => Navigator.of(context).push(
@@ -75,9 +123,15 @@ class TechnicianProfileScreen extends StatelessWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.onBack});
+  const _ProfileHeader({
+    required this.onBack,
+    required this.name,
+    required this.imageUrl,
+  });
 
   final VoidCallback onBack;
+  final String name;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +194,17 @@ class _ProfileHeader extends StatelessWidget {
               color: Colors.white,
               border: Border.all(color: Colors.white, width: 3),
             ),
-            child: Icon(
-              Icons.engineering_rounded,
-              size: 54.sp,
-              color: const Color(0xFF174EA6),
-            ),
+            child: imageUrl == null
+                ? Icon(
+                    Icons.engineering_rounded,
+                    size: 54.sp,
+                    color: const Color(0xFF174EA6),
+                  )
+                : ClipOval(child: Image.network(imageUrl!, fit: BoxFit.cover)),
           ),
           16.verticalSpace,
           Text(
-            'Marc Anderson',
+            name,
             style: getTextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w600,
@@ -170,16 +226,12 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _AccountInfoCard extends StatelessWidget {
-  const _AccountInfoCard();
+  const _AccountInfoCard({required this.rows});
+
+  final List<(String, String)> rows;
 
   @override
   Widget build(BuildContext context) {
-    const rows = [
-      ('Full name', 'Marc Anderson'),
-      ('Email address', 'marc@centralcare.ca'),
-      ('Phone number', '(514) 555-0100'),
-      ('Service area', 'Greater Montréal'),
-    ];
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(

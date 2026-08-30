@@ -1,57 +1,67 @@
-import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:get/get.dart';
 
+import '../../../../routes/app_routes.dart';
 import '../../../auth/controller/auth_controller.dart';
+import '../../../auth/models/auth_models.dart';
+import '../../data/profile_repository.dart';
 
 class ViewProfileController extends GetxController {
-  // Observable variables for dynamic updates
-  var userName = 'John Doe'.obs;
-  var userEmail = 'sarah.thompson@email.com'.obs;
-  var profileImageUrl = Rxn<String>();
+  final ProfileRepository _repository = Get.find<ProfileRepository>();
+
+  final profile = Rxn<UserProfileResponse>();
+  final isLoading = false.obs;
+  final errorMessage = ''.obs;
+
+  String get userName {
+    final value = profile.value;
+    return value == null ? '' : '${value.firstName} ${value.lastName}'.trim();
+  }
+
+  String get userEmail => profile.value?.email ?? '';
+  String? get profileImageUrl => profile.value?.avatarUrl;
+  String get displayedUserName =>
+      userName.isEmpty ? (isLoading.value ? 'Customer Name' : '—') : userName;
+  String get displayedUserEmail => userEmail.isEmpty
+      ? (isLoading.value ? 'customer@example.com' : '—')
+      : userEmail;
+
+  String get homeLocation {
+    final address = primaryAddress;
+    if (address == null) {
+      return isLoading.value ? 'Loading location...' : 'Location unavailable';
+    }
+    return [
+      address.city.trim(),
+      address.state.trim(),
+    ].where((part) => part.isNotEmpty).join(', ');
+  }
+
+  AddressResponse? get primaryAddress {
+    final items = profile.value?.addresses ?? const <AddressResponse>[];
+    for (final address in items) {
+      if (address.isPrimary) return address;
+    }
+    return items.isEmpty ? null : items.first;
+  }
 
   @override
   void onInit() {
     super.onInit();
-    // Load user profile data from backend here
-    _loadUserProfile();
+    loadProfile();
   }
 
-  void _loadUserProfile() {
-    // userName.value = response.userName;
-    // userEmail.value = response.userEmail;
-    // profileImageUrl.value = response.profileImageUrl;
-  }
-
-  void handleEditProfile() {
-    Get.toNamed(AppRoute.editProfileScreen);
-  }
-
-  void handlePaymentMethods() {
-    Get.toNamed(AppRoute.paymentMethodsScreen);
-  }
-
-  void handleEquipmentDetails() {
-    Get.toNamed(AppRoute.equipmentDetailsScreen);
-  }
-
-  void handleSavedAddresses() {
-    Get.toNamed(AppRoute.savedAddressesScreen);
-  }
-
-  void handleServiceHistory() {
-    Get.toNamed(AppRoute.serviceHistoryScreen);
-  }
-
-  void handleNotifications() {
-    Get.toNamed('/notificationsScreen');
-  }
-
-  void handleHelpSupport() {
-    Get.toNamed(AppRoute.helpSupportScreen);
-  }
-
-  void handleTermsPrivacy() {
-    Get.toNamed(AppRoute.termsPrivacyScreen);
+  Future<void> loadProfile() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    errorMessage.value = '';
+    final result = await _repository.getProfile();
+    if (result.isSuccess && result.data != null) {
+      profile.value = result.data;
+      Get.find<AuthController>().currentProfile.value = result.data;
+    } else {
+      errorMessage.value = result.errorMessage;
+    }
+    isLoading.value = false;
   }
 
   Future<void> handleLogout() async {

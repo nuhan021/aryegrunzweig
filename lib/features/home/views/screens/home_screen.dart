@@ -4,13 +4,33 @@ import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/home_activity_cards.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/home_quick_action_cards.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/shop_products_preview.dart';
+import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_profile_controller.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final ViewProfileController _profileController;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileController = Get.find<ViewProfileController>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_profileController.profile.value == null) {
+        _profileController.loadProfile();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +40,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             // app bar
-            HomeAppBar(),
+            HomeAppBar(profileController: _profileController),
 
             // body
             Expanded(
@@ -72,7 +92,9 @@ class HomeScreen extends StatelessWidget {
 }
 
 class HomeAppBar extends StatelessWidget {
-  const HomeAppBar({super.key});
+  const HomeAppBar({super.key, required this.profileController});
+
+  final ViewProfileController profileController;
 
   @override
   Widget build(BuildContext context) {
@@ -109,12 +131,23 @@ class HomeAppBar extends StatelessWidget {
                         ),
                       ),
                       5.verticalSpace,
-                      Text(
-                        'New York, NY',
-                        style: getTextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
+                      Obx(
+                        () => Skeletonizer(
+                          enabled: profileController.isLoading.value,
+                          effect: ShimmerEffect(
+                            baseColor: Colors.white.withValues(alpha: 0.18),
+                            highlightColor: Colors.white.withValues(
+                              alpha: 0.42,
+                            ),
+                          ),
+                          child: Text(
+                            profileController.homeLocation,
+                            style: getTextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -178,7 +211,7 @@ class HomeAppBar extends StatelessWidget {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),

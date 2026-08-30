@@ -6,6 +6,7 @@ class EditProfileForm extends StatelessWidget {
   final TextEditingController fullNameController;
   final TextEditingController emailController;
   final TextEditingController phoneController;
+  final TextEditingController companyController;
   final TextEditingController addressController;
   final TextEditingController apartmentController;
   final TextEditingController cityController;
@@ -25,6 +26,7 @@ class EditProfileForm extends StatelessWidget {
     required this.fullNameController,
     required this.emailController,
     required this.phoneController,
+    required this.companyController,
     required this.addressController,
     required this.apartmentController,
     required this.cityController,
@@ -59,6 +61,7 @@ class EditProfileForm extends StatelessWidget {
           controller: emailController,
           keyboardType: TextInputType.emailAddress,
           onChanged: onEmailChanged,
+          enabled: false,
         ),
         EditProfileFormField(
           label: 'Phone Number',
@@ -67,6 +70,12 @@ class EditProfileForm extends StatelessWidget {
           controller: phoneController,
           keyboardType: TextInputType.phone,
           onChanged: onPhoneChanged,
+        ),
+        EditProfileFormField(
+          label: 'Company',
+          hintText: 'Company name',
+          icon: Icons.business,
+          controller: companyController,
         ),
         EditProfileFormField(
           label: 'Address',

@@ -1,4 +1,5 @@
 import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
+import 'package:aryegrunzweig/core/utils/constants/colors.dart';
 import 'package:aryegrunzweig/features/notifications/models/notification_model.dart'
     as notif_model;
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class NotificationCard extends StatelessWidget {
       case notif_model.NotificationType.booking:
         return const Color(0x1428C76F);
       case notif_model.NotificationType.offer:
-        return const Color(0x147367F0);
+        return AppColors.primary.withValues(alpha: 0.08);
       case notif_model.NotificationType.reminder:
         return const Color(0x1400CFE8);
     }
@@ -96,7 +97,7 @@ class NotificationCard extends StatelessWidget {
                       notification.type == notif_model.NotificationType.booking
                       ? const Color(0xFF28C76F)
                       : notification.type == notif_model.NotificationType.offer
-                      ? const Color(0xFF7367F0)
+                      ? AppColors.primary
                       : const Color(0xFF00CFE8),
                 ),
               ),

@@ -3,6 +3,8 @@ import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
 import 'package:aryegrunzweig/features/auth/data/auth_repository.dart';
 import 'package:aryegrunzweig/features/home/controller/home_controller.dart';
 import 'package:aryegrunzweig/features/onboarding/controller/onboarding_controller.dart';
+import 'package:aryegrunzweig/features/profile/data/profile_repository.dart';
+import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_profile_controller.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -30,6 +32,16 @@ class ControllerBinder extends Bindings {
     Get.put<AuthController>(
       AuthController(repository: AuthRepository(Get.find<ApiClient>())),
       permanent: true,
+    );
+
+    Get.lazyPut<ProfileRepository>(
+      () => ProfileRepository(Get.find<ApiClient>()),
+      fenix: true,
+    );
+
+    Get.lazyPut<ViewProfileController>(
+      () => ViewProfileController(),
+      fenix: true,
     );
 
     Get.lazyPut<AppBottomNavBarController>(
