@@ -26,6 +26,13 @@ class ApiConstants {
   static const String serviceRequestCatalog = '/api/service-requests/catalog';
   static const String servicePaymentAuthorization =
       '/api/payments/service-requests';
+  static const String productCategories = '/api/catalog/product-categories';
+  static const String products = '/api/catalog/products';
+  static const String cart = '/api/cart';
+  static const String checkoutPreview = '/api/checkout/preview';
+  static const String checkoutOrders = '/api/checkout/orders';
+  static const String checkoutCart = '/api/checkout/cart';
+  static const String orders = '/api/orders';
 
   // Swagger SignupDto currently requires this version and the public settings
   // response does not expose one yet. Replace it when that contract is added.

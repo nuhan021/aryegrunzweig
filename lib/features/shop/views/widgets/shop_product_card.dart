@@ -39,11 +39,25 @@ class ShopProductCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
               ),
               alignment: Alignment.center,
-              child: Icon(
-                Icons.image_outlined,
-                color: Colors.grey.shade400,
-                size: 32.sp,
-              ),
+              child: product.imageUrl == null
+                  ? Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey.shade400,
+                      size: 32.sp,
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(10.r),
+                      child: Image.network(
+                        product.imageUrl!,
+                        width: double.maxFinite,
+                        height: double.maxFinite,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ),
             ),
             10.verticalSpace,
             Text(
@@ -83,7 +97,7 @@ class ShopProductCard extends StatelessWidget {
                     height: 26.w,
                     width: 26.w,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,

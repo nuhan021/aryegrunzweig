@@ -1,19 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
-import '../../../../core/common/widgets/custom_text_field.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
+import '../../../orders/controller/orders_controller.dart';
 import '../../controller/shop_controller.dart';
+import '../../data/commerce_models.dart';
 import 'order_success_screen.dart';
 
-class OrderSummaryScreen extends StatelessWidget {
-  OrderSummaryScreen({super.key});
+class OrderSummaryScreen extends StatefulWidget {
+  const OrderSummaryScreen({super.key});
 
+  @override
+  State<OrderSummaryScreen> createState() => _OrderSummaryScreenState();
+}
+
+class _OrderSummaryScreenState extends State<OrderSummaryScreen>
+    with WidgetsBindingObserver {
   final ShopController controller = Get.find<ShopController>();
+  bool checkingPayment = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    controller.loadPreview();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        controller.checkoutSession.value != null) {
+      _refreshPayment();
+    }
+  }
+
+  Future<void> _placeOrder() async {
+    final session = await controller.placeOrder();
+    if (session == null || !mounted) return;
+    final opened = await launchUrl(
+      Uri.parse(session.checkoutUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened) {
+      AppHelperFunctions.showErrorSnackBar(
+        'Unable to open the secure Stripe Checkout page.',
+      );
+    }
+  }
+
+  Future<void> _refreshPayment() async {
+    if (checkingPayment) return;
+    setState(() => checkingPayment = true);
+    final order = await controller.refreshCheckoutOrder();
+    if (!mounted) return;
+    setState(() => checkingPayment = false);
+    final paid =
+        order != null &&
+        (const {
+              'AUTHORIZED',
+              'CAPTURED',
+              'SUCCEEDED',
+            }.contains(order.paymentStatus) ||
+            const {
+              CommerceOrderStatus.paid,
+              CommerceOrderStatus.processing,
+              CommerceOrderStatus.shipped,
+              CommerceOrderStatus.delivered,
+            }.contains(order.status));
+    if (!paid) return;
+    if (Get.isRegistered<OrdersController>()) {
+      await Get.find<OrdersController>().loadAll();
+    }
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => OrderSuccessScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +139,7 @@ class OrderSummaryScreen extends StatelessWidget {
                               12.horizontalSpace,
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       line.product.name,
@@ -88,11 +162,11 @@ class OrderSummaryScreen extends StatelessWidget {
                                     ),
                                     10.verticalSpace,
                                     _QuantityStepper(
-                                      quantity: line.quantity.value,
-                                      onDecrement: () => controller
-                                          .decrementQuantity(line),
-                                      onIncrement: () => controller
-                                          .incrementQuantity(line),
+                                      quantity: line.quantity,
+                                      onDecrement: () =>
+                                          controller.decrementQuantity(line),
+                                      onIncrement: () =>
+                                          controller.incrementQuantity(line),
                                     ),
                                   ],
                                 ),
@@ -155,131 +229,47 @@ class OrderSummaryScreen extends StatelessWidget {
                       ),
 
                       24.verticalSpace,
-                      _SectionTitle('Contact Information'),
-                      12.verticalSpace,
-                      _FieldLabel('Email'),
-                      8.verticalSpace,
-                      CustomTextField(
-                        controller: controller.emailController,
-                        hintText: 'info@gmail.com',
-                        inputType: TextInputType.emailAddress,
-                      ),
-
-                      24.verticalSpace,
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _SectionTitle('Shipping Address'),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.add,
-                                size: 16.sp,
-                                color: AppColors.primary,
-                              ),
-                              4.horizontalSpace,
-                              Text(
-                                'Add New',
-                                style: getTextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      _SectionTitle('Saved Shipping Address'),
                       14.verticalSpace,
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _LabeledField(
-                              label: 'Name',
-                              hint: 'info@gmail.com',
-                              controller: controller.nameController,
-                            ),
+                      if (controller.addresses.isEmpty)
+                        Text(
+                          'Add a saved address from Profile before checkout.',
+                          style: getTextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.orange.shade800,
+                            textAlign: TextAlign.left,
                           ),
-                          12.horizontalSpace,
-                          Expanded(
-                            child: _LabeledField(
-                              label: 'Phone',
-                              hint: 'info@gmail.com',
-                              controller: controller.phoneController,
-                            ),
-                          ),
-                        ],
-                      ),
-                      16.verticalSpace,
-                      _LabeledField(
-                        label: 'Apartment/ suite',
-                        hint: 'Apartment',
-                        controller: controller.apartmentController,
-                      ),
-                      16.verticalSpace,
-                      _LabeledField(
-                        label: 'Country',
-                        hint: 'Info',
-                        controller: controller.countryController,
-                      ),
-                      16.verticalSpace,
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _LabeledField(
-                              label: 'State',
-                              hint: 'Info',
-                              controller: controller.stateController,
-                            ),
-                          ),
-                          10.horizontalSpace,
-                          Expanded(
-                            child: _LabeledField(
-                              label: 'City',
-                              hint: 'Info',
-                              controller: controller.cityController,
-                            ),
-                          ),
-                          10.horizontalSpace,
-                          Expanded(
-                            child: _LabeledField(
-                              label: 'Zip code',
-                              hint: '1234',
-                              controller: controller.zipController,
-                              inputType: TextInputType.number,
-                            ),
-                          ),
-                        ],
-                      ),
-                      14.verticalSpace,
-
-                      GestureDetector(
-                        onTap: controller.toggleSaveAddress,
-                        child: Row(
-                          children: [
-                            Icon(
-                              controller.saveAddress.value
-                                  ? Icons.check_box
-                                  : Icons.check_box_outline_blank,
-                              size: 20.sp,
-                              color: controller.saveAddress.value
-                                  ? AppColors.primary
-                                  : Colors.grey,
-                            ),
-                            8.horizontalSpace,
-                            Expanded(
-                              child: Text(
-                                'Save this address for future purchases',
-                                style: getTextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.black87,
-                                  textAlign: TextAlign.left,
+                        )
+                      else
+                        DropdownButtonFormField<String>(
+                          initialValue:
+                              controller.selectedShippingAddressId.value,
+                          items: controller.addresses
+                              .map(
+                                (address) => DropdownMenuItem(
+                                  value: address.id,
+                                  child: Text(
+                                    '${address.line1}, ${address.city}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
+                              )
+                              .toList(growable: false),
+                          onChanged: (id) {
+                            if (id != null) {
+                              controller.selectShippingAddress(id);
+                            }
+                          },
+                        ),
+
+                      10.verticalSpace,
+                      Text(
+                        'Tax, shipping, and total are calculated by the server for the selected address.',
+                        style: getTextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey.shade600,
+                          lineHeight: 1.4,
+                          textAlign: TextAlign.left,
                         ),
                       ),
 
@@ -321,18 +311,22 @@ class OrderSummaryScreen extends StatelessWidget {
 
                       24.verticalSpace,
                       SrPrimaryButton(
-                        text: 'Place Order',
-                        onPressed: () {
-                          controller.placeOrder();
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OrderSuccessScreen(),
-                            ),
-                            (route) => route.isFirst,
-                          );
-                        },
+                        text: controller.isCheckoutLoading.value
+                            ? 'Opening Stripe...'
+                            : 'Continue to secure payment',
+                        onPressed: controller.isCheckoutLoading.value
+                            ? () {}
+                            : _placeOrder,
                       ),
+                      if (controller.checkoutSession.value != null)
+                        TextButton(
+                          onPressed: checkingPayment ? null : _refreshPayment,
+                          child: Text(
+                            checkingPayment
+                                ? 'Checking payment...'
+                                : 'Refresh payment status',
+                          ),
+                        ),
                       10.verticalSpace,
                       Text(
                         'By placing this order, you agree to our Terms of Service and Privacy Policy. Secure 256-bit SSL encrypted transaction.',
@@ -381,7 +375,11 @@ class _QuantityStepper extends StatelessWidget {
             onTap: onDecrement,
             child: Padding(
               padding: EdgeInsets.all(4.w),
-              child: Icon(Icons.remove, size: 14.sp, color: Colors.grey.shade600),
+              child: Icon(
+                Icons.remove,
+                size: 14.sp,
+                color: Colors.grey.shade600,
+              ),
             ),
           ),
           Padding(
@@ -467,55 +465,6 @@ class _SectionTitle extends StatelessWidget {
         color: Colors.black,
         textAlign: TextAlign.left,
       ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: getTextStyle(
-        fontSize: 12.sp,
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-        textAlign: TextAlign.left,
-      ),
-    );
-  }
-}
-
-class _LabeledField extends StatelessWidget {
-  const _LabeledField({
-    required this.label,
-    required this.hint,
-    required this.controller,
-    this.inputType = TextInputType.text,
-  });
-
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-  final TextInputType inputType;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _FieldLabel(label),
-        8.verticalSpace,
-        CustomTextField(
-          controller: controller,
-          hintText: hint,
-          inputType: inputType,
-        ),
-      ],
     );
   }
 }

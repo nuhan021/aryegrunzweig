@@ -7,6 +7,8 @@ import 'package:aryegrunzweig/features/home/views/widgets/shop_products_preview.
 import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_profile_controller.dart';
 import 'package:aryegrunzweig/features/services/controller/services_controller.dart';
 import 'package:aryegrunzweig/features/services/data/service_request_models.dart';
+import 'package:aryegrunzweig/features/orders/controller/orders_controller.dart';
+import 'package:aryegrunzweig/features/shop/data/commerce_models.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,12 +26,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late final ViewProfileController _profileController;
   late final ServicesController _servicesController;
+  late final OrdersController _ordersController;
 
   @override
   void initState() {
     super.initState();
     _profileController = Get.find<ViewProfileController>();
     _servicesController = Get.find<ServicesController>();
+    _ordersController = Get.find<OrdersController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_profileController.profile.value == null) {
         _profileController.loadProfile();
@@ -62,11 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     _ServiceRequestActivity(controller: _servicesController),
 
-                    const ShippedCard(
-                      orderId: '#CC-3084',
-                      title: 'Retractable Hose System',
-                      trackingNumber: 'UPS 1Z82A4X95012345678',
-                    ),
+                    _OrderActivity(controller: _ordersController),
 
                     10.verticalSpace,
 
@@ -82,6 +82,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+class _OrderActivity extends StatelessWidget {
+  const _OrderActivity({required this.controller});
+  final OrdersController controller;
+
+  @override
+  Widget build(BuildContext context) => Obx(() {
+    final shipped = controller.orders.firstWhereOrNull(
+      (item) => item.api.status == CommerceOrderStatus.shipped,
+    );
+    if (shipped == null) return const SizedBox.shrink();
+    return ShippedCard(
+      orderId: '#${shipped.orderCode}',
+      title: shipped.itemName,
+      trackingNumber: shipped.trackingNumber,
+    );
+  });
 }
 
 class _ServiceRequestActivity extends StatelessWidget {

@@ -7,6 +7,9 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/shop_controller.dart';
+import '../../../orders/controller/orders_controller.dart';
+import '../../../orders/views/screens/order_delivered_screen.dart';
+import '../../../orders/views/screens/order_tracking_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   OrderSuccessScreen({super.key});
@@ -16,6 +19,8 @@ class OrderSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deliveryDate = controller.lastOrderDeliveryDate;
+    final apiOrder = controller.completedOrder.value;
+    final placedOrder = apiOrder == null ? null : ShopOrder(api: apiOrder);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -29,7 +34,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 height: 72.w,
                 width: 72.w,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -100,7 +105,7 @@ class OrderSuccessScreen extends StatelessWidget {
                             vertical: 6.h,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Row(
@@ -177,7 +182,7 @@ class OrderSuccessScreen extends StatelessWidget {
                                   ),
                                   8.verticalSpace,
                                   Text(
-                                    'Qty: ${line.quantity.value}',
+                                    'Qty: ${line.quantity}',
                                     style: getTextStyle(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w600,
@@ -220,7 +225,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 width: double.maxFinite,
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(14.r),
                 ),
                 child: Row(
@@ -314,17 +319,35 @@ class OrderSuccessScreen extends StatelessWidget {
 
               SrPrimaryButton(
                 text: 'View Order Details',
-                onPressed: () {},
+                onPressed: placedOrder == null
+                    ? () {}
+                    : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              placedOrder.status == OrderStatus.delivered
+                              ? OrderDeliveredScreen(order: placedOrder)
+                              : OrderTrackingScreen(order: placedOrder),
+                        ),
+                      ),
               ),
               10.verticalSpace,
               GestureDetector(
-                onTap: () {},
+                onTap: placedOrder == null
+                    ? null
+                    : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              OrderTrackingScreen(order: placedOrder),
+                        ),
+                      ),
                 child: Container(
                   height: 50.h,
                   width: double.maxFinite,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Row(

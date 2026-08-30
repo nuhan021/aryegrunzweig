@@ -22,29 +22,26 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int quantity = 1;
   int selectedThumbnail = 0;
   int selectedTab = 0;
-
-  static const _features = [
-    (Icons.verified_outlined, '10-Year Comprehensive Warranty'),
-    (Icons.local_shipping_outlined, 'Complimentary Professional Installation'),
-    (
-      Icons.bolt_outlined,
-      'Dual-stage motor delivering consistent power across every inlet.',
-    ),
-    (
-      Icons.volume_off_outlined,
-      'Advanced acoustic dampening for minimal disruption in the home.',
-    ),
-    (
-      Icons.shield_outlined,
-      '99.9% HEPA filtration capturing microscopic allergens and dust.',
-    ),
-    (
-      Icons.settings_outlined,
-      'Constructed with high-grade alloys and architectural precision.',
-    ),
-  ];
+  late ShopProduct product;
 
   static const _tabs = ['Description', 'Specifications', 'Shipping info'];
+
+  @override
+  void initState() {
+    super.initState();
+    product = widget.product;
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    final loaded = await controller.loadProductDetails(product);
+    if (loaded != null && mounted) {
+      setState(() {
+        product = loaded;
+        selectedThumbnail = 0;
+      });
+    }
+  }
 
   void _incrementQuantity() => setState(() => quantity++);
 
@@ -54,7 +51,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final product = widget.product;
     final related = controller.relatedProducts(product);
 
     return Scaffold(
@@ -105,50 +101,69 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         border: Border.all(color: Colors.grey.shade200),
                       ),
                       alignment: Alignment.center,
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: Colors.grey.shade400,
-                        size: 56.sp,
-                      ),
+                      child: product.api.imageUrls.isEmpty
+                          ? Icon(
+                              Icons.image_outlined,
+                              color: Colors.grey.shade400,
+                              size: 56.sp,
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(14.r),
+                              child: Image.network(
+                                product.api.imageUrls[selectedThumbnail],
+                                width: double.maxFinite,
+                                height: double.maxFinite,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.broken_image_outlined),
+                              ),
+                            ),
                     ),
                     14.verticalSpace,
 
-                    SizedBox(
-                      height: 70.h,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 4,
-                        separatorBuilder: (_, __) => 10.horizontalSpace,
-                        itemBuilder: (context, index) {
-                          final isSelected = selectedThumbnail == index;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => selectedThumbnail = index),
-                            child: Container(
-                              height: 70.h,
-                              width: 70.h,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : Colors.grey.shade200,
-                                  width: isSelected ? 1.5 : 1,
+                    if (product.api.imageUrls.isNotEmpty)
+                      SizedBox(
+                        height: 70.h,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: product.api.imageUrls.length,
+                          separatorBuilder: (_, __) => 10.horizontalSpace,
+                          itemBuilder: (context, index) {
+                            final isSelected = selectedThumbnail == index;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => selectedThumbnail = index),
+                              child: Container(
+                                height: 70.h,
+                                width: 70.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.grey.shade200,
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  child: Image.network(
+                                    product.api.imageUrls[index],
+                                    height: double.maxFinite,
+                                    width: double.maxFinite,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.broken_image_outlined),
+                                  ),
                                 ),
                               ),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.image_outlined,
-                                color: Colors.grey.shade400,
-                                size: 22.sp,
-                              ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                    20.verticalSpace,
+                    if (product.api.imageUrls.isNotEmpty) 20.verticalSpace,
 
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +208,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     14.verticalSpace,
 
                     Text(
-                      'Quiet-flow technology, the ${product.name} Series redefines architectural cleanliness. Powered by a high-performance dual-stage motor and integrated HEPA filtration, it ensures a pristine environment with whisper-quiet operation and uncompromising suction power.',
+                      product.api.description,
                       style: getTextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w400,
@@ -204,21 +219,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     ),
                     18.verticalSpace,
 
-                    ..._features.map(
+                    ...product.api.features.map(
                       (feature) => Padding(
                         padding: EdgeInsets.only(bottom: 12.h),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                              feature.$1,
+                              Icons.check_circle_outline,
                               size: 17.sp,
                               color: AppColors.primary,
                             ),
                             10.horizontalSpace,
                             Expanded(
                               child: Text(
-                                feature.$2,
+                                feature,
                                 style: getTextStyle(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w400,
@@ -282,8 +297,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     14.verticalSpace,
 
                     GestureDetector(
-                      onTap: () {
-                        controller.addToCart(product, quantity: quantity);
+                      onTap: () async {
+                        if (!await controller.addToCart(
+                              product,
+                              quantity: quantity,
+                            ) ||
+                            !context.mounted) {
+                          return;
+                        }
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -445,8 +466,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   ),
                                 ),
                               ),
-                              onAddToCart: () {
-                                controller.addToCart(relatedProduct);
+                              onAddToCart: () async {
+                                if (!await controller.addToCart(
+                                      relatedProduct,
+                                    ) ||
+                                    !context.mounted) {
+                                  return;
+                                }
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -481,19 +507,25 @@ class _TabContent extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (tab) {
       case 1:
-        return Text(
-          'Detailed technical specifications for the ${product.name} will be available soon.',
-          style: getTextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w400,
-            color: Colors.grey.shade700,
-            lineHeight: 1.5,
-            textAlign: TextAlign.left,
-          ),
+        final specifications = product.api.specifications;
+        if (specifications == null || specifications.isEmpty) {
+          return const Text('No specifications provided.');
+        }
+        return Column(
+          children: specifications.entries
+              .map(
+                (entry) => ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(entry.key),
+                  trailing: Text('${entry.value}'),
+                ),
+              )
+              .toList(growable: false),
         );
       case 2:
         return Text(
-          'This item ships free within 7-10 business days. Professional installation can be scheduled after delivery from the Services tab.',
+          product.api.shippingInfo ?? 'No shipping information provided.',
           style: getTextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w400,
@@ -503,31 +535,15 @@ class _TabContent extends StatelessWidget {
           ),
         );
       default:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'This series represents the pinnacle of modern architectural maintenance. Designed to be integrated seamlessly into high-end residences, it eliminates the noise and inconvenience of portable vacuum units while providing vastly superior air quality.',
-              style: getTextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.grey.shade700,
-                lineHeight: 1.5,
-                textAlign: TextAlign.left,
-              ),
-            ),
-            18.verticalSpace,
-            Text(
-              "Each component is engineered for longevity. The brushless motor technology ensures minimal wear and tear, while the intelligent self-cleaning filter system reduces maintenance frequency. It's more than a utility; it's an infrastructure for wellness.",
-              style: getTextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.grey.shade700,
-                lineHeight: 1.5,
-                textAlign: TextAlign.left,
-              ),
-            ),
-          ],
+        return Text(
+          product.api.description,
+          style: getTextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w400,
+            color: Colors.grey.shade700,
+            lineHeight: 1.5,
+            textAlign: TextAlign.left,
+          ),
         );
     }
   }

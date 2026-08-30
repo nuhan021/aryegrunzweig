@@ -221,26 +221,56 @@ class OrderDeliveredScreen extends StatelessWidget {
               ),
               24.verticalSpace,
 
-              GestureDetector(
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ReturnOrderScreen(order: order),
+              if (order.api.canReturn)
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ReturnOrderScreen(order: order),
+                    ),
+                  ),
+                  child: Container(
+                    height: 50.h,
+                    width: double.maxFinite,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      'Return order',
+                      style: getTextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
+              if (order.api.canReturn) 12.verticalSpace,
+
+              GestureDetector(
+                onTap: () async {
+                  final added = await Get.find<OrdersController>().reorder(
+                    order,
+                  );
+                  if (added) {
+                    Get.find<AppBottomNavBarController>().jumpToScreen(2);
+                  }
+                },
                 child: Container(
                   height: 50.h,
                   width: double.maxFinite,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Text(
-                    'Return order',
+                    'Reorder items',
                     style: getTextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
