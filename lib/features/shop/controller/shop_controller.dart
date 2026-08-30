@@ -1,127 +1,328 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../core/utils/helpers/app_helper.dart';
+import '../../auth/models/auth_models.dart';
+import '../../profile/data/profile_repository.dart';
+import '../data/commerce_models.dart';
+import '../data/commerce_repository.dart';
 
 class ShopProduct {
-  ShopProduct({
-    required this.id,
-    required this.name,
-    required this.subtitle,
-    required this.price,
-  });
-
-  final String id;
-  final String name;
-  final String subtitle;
-  final double price;
+  const ShopProduct({required this.api});
+  final CommerceProduct api;
+  String get id => api.id;
+  String get name => api.name;
+  String get subtitle => api.tagline ?? api.category;
+  double get price => api.price.toDouble();
+  String? get imageUrl => api.imageUrls.firstOrNull;
 }
 
 class CartLine {
-  CartLine({required this.product, int quantity = 1})
-    : quantity = quantity.obs;
-
-  final ShopProduct product;
-  final RxInt quantity;
-
-  double get lineTotal => product.price * quantity.value;
+  const CartLine({required this.api});
+  final CommerceCartItem api;
+  ShopProduct get product => ShopProduct(
+    api: CommerceProduct(
+      id: api.product.id,
+      sku: null,
+      name: api.product.name,
+      description: api.product.tagline ?? '',
+      category: '',
+      price: api.unitPrice,
+      stock: api.product.stock,
+      imageUrls: api.product.imageUrls,
+      slug: api.product.slug,
+      features: const [],
+      specifications: null,
+      warranty: null,
+      shippingInfo: null,
+      isActive: true,
+      taxable: api.product.taxable,
+      tagline: api.product.tagline,
+      inStock: api.product.inStock,
+    ),
+  );
+  int get quantity => api.quantity;
+  double get lineTotal => api.lineTotal.toDouble();
 }
 
 class ShopController extends GetxController {
-  static const int itemsPerPage = 8;
-  static const double taxRate = 0.08;
+  static const int itemsPerPage = 24;
 
+  final CommerceRepository _repository = Get.find<CommerceRepository>();
+  final ProfileRepository _profileRepository = Get.find<ProfileRepository>();
   final TextEditingController searchController = TextEditingController();
 
-  final List<ShopProduct> _allProducts = List.generate(
-    56,
-    (index) => ShopProduct(
-      id: 'P${index + 1}',
-      name: 'Modern Wall Inlets',
-      subtitle: 'Set of 5 Premium Finishes',
-      price: 145.00,
-    ),
-  );
+  final products = <ShopProduct>[].obs;
+  final categories = <ProductCategoryCount>[].obs;
+  final cart = <CartLine>[].obs;
+  final addresses = <AddressResponse>[].obs;
+  final currentPage = 1.obs;
+  final totalItems = 0.obs;
+  final selectedCategory = RxnString();
+  final selectedShippingAddressId = RxnString();
+  final isLoading = false.obs;
+  final isCartLoading = false.obs;
+  final isCheckoutLoading = false.obs;
+  final errorMessage = ''.obs;
+  final preview = Rxn<CheckoutPreview>();
+  final checkoutSession = Rxn<CheckoutSession>();
+  final completedOrder = Rxn<CommerceOrder>();
+  String? _checkoutIdempotencyKey;
 
-  var currentPage = 1.obs;
+  int get totalPages =>
+      totalItems.value == 0 ? 1 : (totalItems.value / itemsPerPage).ceil();
+  List<ShopProduct> get currentPageProducts => products;
+  double get subtotal => preview.value?.subtotal.toDouble() ?? 0;
+  double get estimatedTax => preview.value?.tax.toDouble() ?? 0;
+  double get shippingFee => preview.value?.shippingFee.toDouble() ?? 0;
+  double get total => preview.value?.total.toDouble() ?? 0;
 
-  int get totalPages => (_allProducts.length / itemsPerPage).ceil();
-
-  List<ShopProduct> get currentPageProducts {
-    final start = (currentPage.value - 1) * itemsPerPage;
-    final end = min(start + itemsPerPage, _allProducts.length);
-    return _allProducts.sublist(start, end);
-  }
-
-  void goToPage(int page) {
-    if (page < 1 || page > totalPages) return;
-    currentPage.value = page;
-  }
-
-  List<ShopProduct> relatedProducts(ShopProduct current, {int count = 4}) {
-    return _allProducts.where((p) => p.id != current.id).take(count).toList();
-  }
-
-  var cart = <CartLine>[].obs;
-
-  void addToCart(ShopProduct product, {int quantity = 1}) {
-    cart
-      ..clear()
-      ..add(CartLine(product: product, quantity: quantity));
-  }
-
-  void incrementQuantity(CartLine line) => line.quantity.value++;
-
-  void decrementQuantity(CartLine line) {
-    if (line.quantity.value > 1) line.quantity.value--;
-  }
-
-  void removeFromCart(CartLine line) => cart.remove(line);
-
-  double get subtotal =>
-      cart.fold(0, (sum, line) => sum + line.lineTotal);
-
-  double get estimatedTax => subtotal * taxRate;
-
-  double get total => subtotal + estimatedTax;
-
-  // --- Checkout form ---
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController apartmentController = TextEditingController();
-  final TextEditingController countryController = TextEditingController();
-  final TextEditingController stateController = TextEditingController();
-  final TextEditingController cityController = TextEditingController();
-  final TextEditingController zipController = TextEditingController();
-  var saveAddress = false.obs;
-
-  void toggleSaveAddress() => saveAddress.value = !saveAddress.value;
-
-  String get shippingAddressSummary {
-    final parts = [
-      apartmentController.text,
-      cityController.text,
-      stateController.text,
-      zipController.text,
-    ].where((part) => part.trim().isNotEmpty).join(', ');
-    return parts.isEmpty ? 'Not provided' : parts;
-  }
-
-  // --- Last placed order (for success screen) ---
   String? lastOrderId;
   double lastOrderSubtotal = 0;
   double lastOrderTax = 0;
   double lastOrderTotal = 0;
-  List<CartLine> lastOrderLines = [];
+  List<CartLine> lastOrderLines = const [];
   DateTime? lastOrderDeliveryDate;
 
-  void placeOrder() {
-    lastOrderId = 'AP-${10000 + Random().nextInt(89999)}';
+  @override
+  void onInit() {
+    super.onInit();
+    loadInitial();
+  }
+
+  Future<void> loadInitial() async {
+    await Future.wait([
+      loadProducts(),
+      loadCategories(),
+      loadCart(),
+      loadAddresses(),
+    ]);
+    if (cart.isNotEmpty && selectedShippingAddressId.value != null) {
+      await loadPreview();
+    }
+  }
+
+  Future<void> loadProducts({int? page}) async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    errorMessage.value = '';
+    final result = await _repository.products(
+      search: searchController.text,
+      category: selectedCategory.value,
+      page: page ?? currentPage.value,
+      pageSize: itemsPerPage,
+    );
+    isLoading.value = false;
+    if (!result.isSuccess || result.data == null) {
+      errorMessage.value = result.errorMessage;
+      return;
+    }
+    currentPage.value = result.data!.page;
+    totalItems.value = result.data!.total;
+    products.assignAll(
+      result.data!.items.map((item) => ShopProduct(api: item)),
+    );
+  }
+
+  Future<void> loadCategories() async {
+    final result = await _repository.categories();
+    if (result.isSuccess && result.data != null) {
+      categories.assignAll(result.data!);
+    }
+  }
+
+  Future<void> search() async {
+    currentPage.value = 1;
+    await loadProducts(page: 1);
+  }
+
+  Future<void> selectCategory(String? category) async {
+    selectedCategory.value = category;
+    await search();
+  }
+
+  Future<void> goToPage(int page) async {
+    if (page < 1 || page > totalPages || page == currentPage.value) return;
+    await loadProducts(page: page);
+  }
+
+  List<ShopProduct> relatedProducts(ShopProduct current, {int count = 4}) =>
+      current.api.relatedProducts
+          .map((item) => ShopProduct(api: item))
+          .take(count)
+          .toList(growable: false);
+
+  Future<ShopProduct?> loadProductDetails(ShopProduct product) async {
+    final result = await _repository.product(product.api.slug ?? product.id);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    return ShopProduct(api: result.data!);
+  }
+
+  Future<void> loadCart() async {
+    isCartLoading.value = true;
+    final result = await _repository.getCart();
+    isCartLoading.value = false;
+    if (result.isSuccess && result.data != null) _setCart(result.data!);
+  }
+
+  Future<bool> addToCart(ShopProduct product, {int quantity = 1}) async {
+    final result = await _repository.addCartItem(product.id, quantity);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return false;
+    }
+    _setCart(result.data!);
+    return true;
+  }
+
+  Future<void> incrementQuantity(CartLine line) async =>
+      _updateQuantity(line, line.quantity + 1);
+
+  Future<void> decrementQuantity(CartLine line) async {
+    if (line.quantity > 1) await _updateQuantity(line, line.quantity - 1);
+  }
+
+  Future<void> _updateQuantity(CartLine line, int quantity) async {
+    final result = await _repository.updateCartItem(
+      line.api.productId,
+      quantity,
+    );
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return;
+    }
+    _setCart(result.data!);
+    await loadPreview();
+  }
+
+  Future<void> removeFromCart(CartLine line) async {
+    final result = await _repository.removeCartItem(line.api.productId);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return;
+    }
+    _setCart(result.data!);
+    if (cart.isNotEmpty) {
+      await loadPreview();
+    } else {
+      preview.value = null;
+    }
+  }
+
+  Future<void> clearCart() async {
+    final result = await _repository.clearCart();
+    if (!result.isSuccess) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return;
+    }
+    cart.clear();
+    preview.value = null;
+    _checkoutIdempotencyKey = null;
+    checkoutSession.value = null;
+  }
+
+  void _setCart(CommerceCart value) {
+    cart.assignAll(value.items.map((item) => CartLine(api: item)));
+    _checkoutIdempotencyKey = null;
+    checkoutSession.value = null;
+  }
+
+  Future<void> loadAddresses() async {
+    final result = await _profileRepository.getAddresses();
+    if (!result.isSuccess || result.data == null) return;
+    addresses.assignAll(result.data!);
+    final primary = addresses.firstWhereOrNull((item) => item.isPrimary);
+    selectedShippingAddressId.value = primary?.id ?? addresses.firstOrNull?.id;
+  }
+
+  Future<void> selectShippingAddress(String id) async {
+    selectedShippingAddressId.value = id;
+    await loadPreview();
+  }
+
+  Future<bool> loadPreview() async {
+    final addressId = selectedShippingAddressId.value;
+    if (addressId == null || cart.isEmpty) return false;
+    final result = await _repository.preview(shippingAddressId: addressId);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return false;
+    }
+    preview.value = result.data;
+    return true;
+  }
+
+  Future<CheckoutSession?> placeOrder() async {
+    if (isCheckoutLoading.value) return null;
+    final addressId = selectedShippingAddressId.value;
+    if (addressId == null) {
+      AppHelperFunctions.showErrorSnackBar(
+        'Add and select a saved shipping address first.',
+      );
+      return null;
+    }
+    if (cart.isEmpty) {
+      AppHelperFunctions.showErrorSnackBar('Your cart is empty.');
+      return null;
+    }
+    if (!await loadPreview()) return null;
+    isCheckoutLoading.value = true;
+    final result = await _repository.checkoutCart(
+      shippingAddressId: addressId,
+      idempotencyKey: _checkoutIdempotencyKey ??= const Uuid().v4(),
+    );
+    isCheckoutLoading.value = false;
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    checkoutSession.value = result.data;
+    lastOrderId = result.data!.orderId;
     lastOrderSubtotal = subtotal;
     lastOrderTax = estimatedTax;
     lastOrderTotal = total;
-    lastOrderLines = List.of(cart);
-    lastOrderDeliveryDate = DateTime.now().add(const Duration(days: 7));
+    lastOrderLines = List<CartLine>.of(cart);
+    return result.data;
   }
+
+  Future<CommerceOrder?> refreshCheckoutOrder() async {
+    final orderId = checkoutSession.value?.orderId;
+    if (orderId == null) return null;
+    final result = await _repository.order(orderId);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    final order = result.data!;
+    completedOrder.value = order;
+    lastOrderId = order.orderNumber;
+    lastOrderSubtotal = order.subtotal.toDouble();
+    lastOrderTax = order.tax.toDouble();
+    lastOrderTotal = order.total.toDouble();
+    lastOrderDeliveryDate = order.estimatedDelivery?.toLocal();
+    return order;
+  }
+
+  final emailController = TextEditingController();
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final apartmentController = TextEditingController();
+  final countryController = TextEditingController();
+  final stateController = TextEditingController();
+  final cityController = TextEditingController();
+  final zipController = TextEditingController();
+  final saveAddress = false.obs;
+  void toggleSaveAddress() => saveAddress.toggle();
+  String get shippingAddressSummary => preview.value?.shippingAddress == null
+      ? 'Not provided'
+      : [
+          preview.value!.shippingAddress!.line1,
+          preview.value!.shippingAddress!.city,
+          preview.value!.shippingAddress!.state,
+          preview.value!.shippingAddress!.zipCode,
+        ].join(', ');
 }

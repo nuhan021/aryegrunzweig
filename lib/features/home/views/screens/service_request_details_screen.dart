@@ -18,9 +18,9 @@ class ServiceRequestDetailsScreen extends StatelessWidget {
   final HomeController controller = Get.find<HomeController>();
 
   final List<String> _timeOptions = const [
-    'Morning',
-    'Afternoon',
-    'Evening',
+    '09:00-12:00',
+    '12:00-15:00',
+    '15:00-18:00',
   ];
 
   @override
@@ -43,10 +43,7 @@ class ServiceRequestDetailsScreen extends StatelessWidget {
                   children: [
                     _Label('Service address'),
                     8.verticalSpace,
-                    CustomTextField(
-                      controller: controller.srAddressController,
-                      hintText: 'Enter your service address',
-                    ),
+                    _AddressDropdown(controller: controller),
                     20.verticalSpace,
 
                     _Label('Preferred date'),
@@ -120,6 +117,56 @@ class _Label extends StatelessWidget {
   }
 }
 
+class _AddressDropdown extends StatelessWidget {
+  const _AddressDropdown({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.srAddresses.isEmpty) {
+        return Container(
+          width: double.maxFinite,
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Text(
+            'Add a saved address from Profile before requesting service.',
+            style: getTextStyle(
+              fontSize: 12.sp,
+              color: Colors.orange.shade800,
+              textAlign: TextAlign.left,
+            ),
+          ),
+        );
+      }
+      return DropdownButtonFormField<String>(
+        initialValue: controller.srSelectedAddressId.value.isEmpty
+            ? null
+            : controller.srSelectedAddressId.value,
+        decoration: const InputDecoration(hintText: 'Select service address'),
+        items: controller.srAddresses
+            .map(
+              (address) => DropdownMenuItem(
+                value: address.id,
+                child: Text('${address.line1}, ${address.city}'),
+              ),
+            )
+            .toList(),
+        onChanged: (id) {
+          if (id == null) return;
+          controller.srSelectAddress(
+            controller.srAddresses.firstWhere((item) => item.id == id),
+          );
+        },
+      );
+    });
+  }
+}
+
 class _DateField extends StatelessWidget {
   const _DateField({required this.controller});
 
@@ -144,7 +191,7 @@ class _DateField extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: Colors.black.withOpacity(0.1)),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
           ),
           child: Row(
             children: [
@@ -187,7 +234,7 @@ class _TimeDropdown extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.black.withOpacity(0.1)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(

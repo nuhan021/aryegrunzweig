@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/services_controller.dart';
+import '../../data/service_request_models.dart';
 
 class ServiceRequestOverviewScreen extends StatelessWidget {
   const ServiceRequestOverviewScreen({super.key, required this.request});
@@ -32,7 +34,7 @@ class ServiceRequestOverviewScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _StatusBadge(status: request.status),
+                        _StatusBadge(label: request.statusLabel),
                         Text(
                           request.id,
                           style: getTextStyle(
@@ -86,6 +88,28 @@ class ServiceRequestOverviewScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (request.api.status !=
+                            CustomerRequestStatus.inProgress &&
+                        request.api.status !=
+                            CustomerRequestStatus.reportSubmitted &&
+                        request.api.status != CustomerRequestStatus.completed &&
+                        request.api.status != CustomerRequestStatus.cancelled)
+                      20.verticalSpace,
+                    if (request.api.status !=
+                            CustomerRequestStatus.inProgress &&
+                        request.api.status !=
+                            CustomerRequestStatus.reportSubmitted &&
+                        request.api.status != CustomerRequestStatus.completed &&
+                        request.api.status != CustomerRequestStatus.cancelled)
+                      OutlinedButton(
+                        onPressed: () => _cancel(context),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(double.infinity, 48.h),
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                        child: const Text('Cancel service request'),
+                      ),
                     20.verticalSpace,
                     Container(
                       width: double.maxFinite,
@@ -116,18 +140,50 @@ class ServiceRequestOverviewScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _cancel(BuildContext context) async {
+    final reasonController = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel service request'),
+        content: TextField(
+          controller: reasonController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Why are you cancelling?',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Keep request'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, reasonController.text.trim()),
+            child: const Text('Cancel request'),
+          ),
+        ],
+      ),
+    );
+    reasonController.dispose();
+    if (reason == null || reason.isEmpty || !context.mounted) return;
+    final success = await Get.find<ServicesController>().cancel(
+      request,
+      reason,
+    );
+    if (success && context.mounted) Navigator.pop(context);
+  }
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
+  const _StatusBadge({required this.label});
 
-  final ServiceRequestStatus status;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final label = status == ServiceRequestStatus.scheduled
-        ? 'SCHEDULED'
-        : 'UNDER REVIEW';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(

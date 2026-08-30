@@ -1,4 +1,3 @@
-import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
 import 'package:aryegrunzweig/features/home/views/screens/service_request_success_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -103,21 +102,31 @@ class ServiceRequestReviewScreen extends StatelessWidget {
             ),
             Padding(
               padding: EdgeInsets.all(16.w),
-              child: SrPrimaryButton(
-                text: 'Submit service request',
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ServiceRequestSuccessScreen(),
-                    ),
-                    (route) => false,
-                  );
-                },
+              child: Obx(
+                () => SrPrimaryButton(
+                  text: controller.srIsSubmitting.value
+                      ? 'Submitting...'
+                      : 'Submit service request',
+                  onPressed: controller.srIsSubmitting.value
+                      ? () {}
+                      : () => _submit(context),
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _submit(BuildContext context) async {
+    final request = await controller.srSubmitRequest();
+    if (request == null || !context.mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            ServiceRequestSuccessScreen(requestNumber: request.requestNumber),
       ),
     );
   }

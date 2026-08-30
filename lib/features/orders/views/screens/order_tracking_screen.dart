@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
@@ -12,27 +13,10 @@ class OrderTrackingScreen extends StatelessWidget {
 
   final ShopOrder order;
 
-  int get _reachedStepIndex {
-    switch (order.status) {
-      case OrderStatus.processing:
-        return 2;
-      case OrderStatus.shipped:
-        return 3;
-      case OrderStatus.delivered:
-        return 4;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final placedDate = DateFormat('MMMM d').format(order.orderDate);
-    final steps = [
-      ('Order placed', placedDate),
-      ('Paid', placedDate),
-      ('Processing', null),
-      ('Shipped', null),
-      ('Delivered', null),
-    ];
+    final controller = Get.find<OrdersController>();
+    final steps = order.api.timeline;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -71,12 +55,17 @@ class OrderTrackingScreen extends StatelessWidget {
                           ),
                           14.verticalSpace,
                           ...List.generate(steps.length, (index) {
-                            final isReached = index <= _reachedStepIndex;
                             final isLast = index == steps.length - 1;
                             return _TimelineStep(
-                              title: steps[index].$1,
-                              date: steps[index].$2,
-                              isReached: isReached,
+                              title: steps[index].label,
+                              date: steps[index].at == null
+                                  ? null
+                                  : DateFormat(
+                                      'MMMM d',
+                                    ).format(steps[index].at!.toLocal()),
+                              isReached:
+                                  steps[index].completed ||
+                                  steps[index].current,
                               isLast: isLast,
                             );
                           }),
@@ -84,6 +73,34 @@ class OrderTrackingScreen extends StatelessWidget {
                       ),
                     ),
                     16.verticalSpace,
+
+                    if (order.api.canCancel)
+                      GestureDetector(
+                        onTap: () async {
+                          final cancelled = await controller.cancelOrder(order);
+                          if (cancelled && context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Container(
+                          height: 50.h,
+                          width: double.maxFinite,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.red.shade300),
+                          ),
+                          child: Text(
+                            'Cancel order',
+                            style: getTextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red.shade500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (order.api.canCancel) 16.verticalSpace,
 
                     Container(
                       width: double.maxFinite,

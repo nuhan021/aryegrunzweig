@@ -8,7 +8,9 @@ import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dar
 import '../widgets/service_request_buttons.dart';
 
 class ServiceRequestSuccessScreen extends StatelessWidget {
-  const ServiceRequestSuccessScreen({super.key});
+  const ServiceRequestSuccessScreen({super.key, this.requestNumber});
+
+  final String? requestNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +26,11 @@ class ServiceRequestSuccessScreen extends StatelessWidget {
                 height: 64.w,
                 width: 64.w,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  Icons.check,
-                  color: AppColors.primary,
-                  size: 32.sp,
-                ),
+                child: Icon(Icons.check, color: AppColors.primary, size: 32.sp),
               ),
               20.verticalSpace,
               Text(
@@ -54,11 +52,23 @@ class ServiceRequestSuccessScreen extends StatelessWidget {
                   color: Colors.grey.shade600,
                 ),
               ),
+              if (requestNumber != null) 10.verticalSpace,
+              if (requestNumber != null)
+                Text(
+                  requestNumber!,
+                  style: getTextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
               const Spacer(flex: 4),
               SrPrimaryButton(
                 text: 'Go to dashboard',
-                onPressed: () =>
-                    Get.find<AppBottomNavBarController>().jumpToScreen(0),
+                onPressed: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Get.find<AppBottomNavBarController>().jumpToScreen(0);
+                },
               ),
               20.verticalSpace,
             ],

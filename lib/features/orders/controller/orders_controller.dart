@@ -1,77 +1,149 @@
 import 'package:get/get.dart';
 
+import '../../../core/utils/helpers/app_helper.dart';
+import '../../shop/data/commerce_models.dart';
+import '../../shop/data/commerce_repository.dart';
+import '../../shop/controller/shop_controller.dart';
+
 enum OrderStatus { processing, shipped, delivered }
 
 class ShopOrder {
-  ShopOrder({
-    required this.id,
-    required this.itemName,
-    required this.itemSubtitle,
-    required this.price,
-    required this.orderCode,
-    required this.orderDate,
-    required this.status,
-    required this.trackingNumber,
-    required this.deliveryAddress,
-    required this.estimatedDelivery,
-    required this.isPaid,
-  });
-
-  final String id;
-  final String itemName;
-  final String itemSubtitle;
-  final double price;
-  final String orderCode;
-  final DateTime orderDate;
-  final OrderStatus status;
-  final String trackingNumber;
-  final String deliveryAddress;
-  final DateTime estimatedDelivery;
-  final bool isPaid;
+  const ShopOrder({required this.api});
+  final CommerceOrder api;
+  String get id => api.id;
+  String get itemName => api.items.firstOrNull?.product.name ?? 'Order';
+  String get itemSubtitle => api.items.length > 1
+      ? '${api.items.length} products'
+      : api.status.wireValue.replaceAll('_', ' ');
+  double get price => api.total.toDouble();
+  String get orderCode => api.orderNumber;
+  DateTime get orderDate => api.createdAt.toLocal();
+  OrderStatus get status => switch (api.status) {
+    CommerceOrderStatus.shipped => OrderStatus.shipped,
+    CommerceOrderStatus.delivered => OrderStatus.delivered,
+    _ => OrderStatus.processing,
+  };
+  String get trackingNumber => api.trackingNumber ?? 'Not assigned';
+  String get deliveryAddress => api.shippingAddress.formatted;
+  DateTime get estimatedDelivery =>
+      api.estimatedDelivery?.toLocal() ?? api.createdAt.toLocal();
+  bool get isPaid =>
+      api.paidAt != null ||
+      const {'AUTHORIZED', 'CAPTURED', 'SUCCEEDED'}.contains(api.paymentStatus);
 }
 
 class OrdersController extends GetxController {
-  var selectedTabIndex = 0.obs;
+  final CommerceRepository _repository = Get.find<CommerceRepository>();
+  final selectedTabIndex = 0.obs;
+  final orders = <ShopOrder>[].obs;
+  final returns = <CommerceReturnRequest>[].obs;
+  final isLoading = false.obs;
+  final isActionLoading = false.obs;
+  final errorMessage = ''.obs;
 
-  final List<ShopOrder> orders = [
-    ShopOrder(
-      id: 'O1',
-      itemName: 'Elite 500 Performance',
-      itemSubtitle: 'Quiet-flow technology',
-      price: 349.00,
-      orderCode: 'CC-3084',
-      orderDate: DateTime(2026, 7, 29),
-      status: OrderStatus.shipped,
-      trackingNumber: 'TRK82910394',
-      deliveryAddress: '123 Aura Lane, California, 90001, United States',
-      estimatedDelivery: DateTime(2026, 8, 8),
-      isPaid: true,
-    ),
-    ShopOrder(
-      id: 'O2',
-      itemName: 'Modern Wall Inlets',
-      itemSubtitle: 'Set of 5 Premium Finishes',
-      price: 145.00,
-      orderCode: 'CC-2977',
-      orderDate: DateTime(2026, 7, 10),
-      status: OrderStatus.delivered,
-      trackingNumber: 'TRK71029581',
-      deliveryAddress: '123 Aura Lane, California, 90001, United States',
-      estimatedDelivery: DateTime(2026, 7, 18),
-      isPaid: true,
-    ),
-  ];
+  @override
+  void onInit() {
+    super.onInit();
+    loadAll();
+  }
+
+  Future<void> loadAll() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    errorMessage.value = '';
+    final orderFuture = _repository.orders(pageSize: 100);
+    final returnFuture = _repository.returns();
+    final orderResult = await orderFuture;
+    final returnResult = await returnFuture;
+    if (orderResult.isSuccess && orderResult.data != null) {
+      orders.assignAll(
+        orderResult.data!.items.map((item) => ShopOrder(api: item)),
+      );
+    } else {
+      errorMessage.value = orderResult.errorMessage;
+    }
+    if (returnResult.isSuccess && returnResult.data != null) {
+      returns.assignAll(returnResult.data!);
+    }
+    isLoading.value = false;
+  }
 
   void selectTab(int index) => selectedTabIndex.value = index;
 
   List<ShopOrder> get filteredOrders {
     switch (selectedTabIndex.value) {
       case 1:
-        return orders.where((o) => o.status == OrderStatus.delivered).toList();
+        return orders
+            .where((order) => order.api.status == CommerceOrderStatus.delivered)
+            .toList(growable: false);
       case 2:
         return const [];
       default:
-        return orders.where((o) => o.status != OrderStatus.delivered).toList();
+        return orders
+            .where((order) => order.api.status != CommerceOrderStatus.delivered)
+            .toList(growable: false);
     }
+  }
+
+  Future<ShopOrder?> refreshOrder(ShopOrder order) async {
+    final result = await _repository.order(order.id);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    final updated = ShopOrder(api: result.data!);
+    final index = orders.indexWhere((item) => item.id == updated.id);
+    if (index >= 0) orders[index] = updated;
+    return updated;
+  }
+
+  Future<bool> cancelOrder(ShopOrder order) async {
+    if (!order.api.canCancel || isActionLoading.value) return false;
+    isActionLoading.value = true;
+    final result = await _repository.cancelOrder(order.id);
+    isActionLoading.value = false;
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return false;
+    }
+    await loadAll();
+    AppHelperFunctions.showSuccessSnackBar('Order cancelled.');
+    return true;
+  }
+
+  Future<bool> reorder(ShopOrder order) async {
+    final result = await _repository.reorder(order.id);
+    if (!result.isSuccess) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return false;
+    }
+    if (Get.isRegistered<ShopController>()) {
+      await Get.find<ShopController>().loadCart();
+    }
+    AppHelperFunctions.showSuccessSnackBar('Items added to your cart.');
+    return true;
+  }
+
+  Future<bool> requestReturn({
+    required ShopOrder order,
+    String? orderItemId,
+    required String reason,
+    String? comments,
+  }) async {
+    if (!order.api.canReturn || isActionLoading.value) return false;
+    isActionLoading.value = true;
+    final result = await _repository.requestReturn(
+      orderId: order.id,
+      orderItemId: orderItemId,
+      reason: reason,
+      comments: comments,
+    );
+    isActionLoading.value = false;
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return false;
+    }
+    returns.insert(0, result.data!);
+    return true;
   }
 }

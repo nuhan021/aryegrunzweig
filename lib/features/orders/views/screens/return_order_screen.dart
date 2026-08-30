@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
@@ -27,6 +28,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
   ];
 
   final TextEditingController _commentsController = TextEditingController();
+  final OrdersController _controller = Get.find<OrdersController>();
   String? _selectedReason = _reasons.first;
 
   @override
@@ -35,14 +37,16 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
     super.dispose();
   }
 
-  void _submitReturn() {
+  Future<void> _submitReturn() async {
     if (_selectedReason == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a reason for the return.')),
-      );
       return;
     }
-
+    final submitted = await _controller.requestReturn(
+      order: widget.order,
+      reason: _selectedReason!,
+      comments: _commentsController.text,
+    );
+    if (!submitted || !mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const ReturnRequestSubmittedScreen()),
     );

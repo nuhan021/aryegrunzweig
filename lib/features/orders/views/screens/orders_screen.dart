@@ -210,10 +210,7 @@ class OrdersScreen extends StatelessWidget {
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(
-                    width: 2.w,
-                    color: const Color(0xFF1C4F50),
-                  ),
+                  child: Container(width: 2.w, color: const Color(0xFF1C4F50)),
                 ),
             ],
           ),

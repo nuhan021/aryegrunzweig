@@ -32,29 +32,47 @@ class SelectIssueScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
                 child: Column(
                   children: [
-                    _CategoryTabs(controller: controller),
-                    18.verticalSpace,
-                    Obx(
-                      () => Column(
-                        children: HomeController
-                            .serviceIssueOptions[controller
-                                .srIssueCategory
-                                .value]!
-                            .map(
-                              (issue) => Padding(
-                                padding: EdgeInsets.only(bottom: 12.h),
-                                child: _IssueOptionTile(
-                                  label: issue,
-                                  isSelected:
-                                      controller.srSelectedIssue.value ==
-                                      issue,
-                                  onTap: () => controller.srSelectIssue(issue),
-                                ),
+                    Obx(() {
+                      if (controller.srIsLoadingCatalog.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (controller.srErrorMessage.value.isNotEmpty) {
+                        return Center(
+                          child: Column(
+                            children: [
+                              Text(controller.srErrorMessage.value),
+                              TextButton(
+                                onPressed: controller.srLoadPrerequisites,
+                                child: const Text('Try again'),
                               ),
-                            )
-                            .toList(),
-                      ),
-                    ),
+                            ],
+                          ),
+                        );
+                      }
+                      final category = controller.srCategories.firstWhereOrNull(
+                        (item) =>
+                            item.id == controller.srSelectedCategoryId.value,
+                      );
+                      return Column(
+                        children: [
+                          _CategoryTabs(controller: controller),
+                          18.verticalSpace,
+                          ...?category?.issues.map(
+                            (issue) => Padding(
+                              padding: EdgeInsets.only(bottom: 12.h),
+                              child: _IssueOptionTile(
+                                label: issue.name,
+                                isSelected:
+                                    controller.srSelectedIssueId.value ==
+                                    issue.id,
+                                onTap: () =>
+                                    controller.srSelectIssueModel(issue),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -91,12 +109,12 @@ class _CategoryTabs extends StatelessWidget {
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(
-          children: HomeController.serviceIssueOptions.keys.map((category) {
+          children: controller.srCategories.map((category) {
             final bool isSelected =
-                controller.srIssueCategory.value == category;
+                controller.srSelectedCategoryId.value == category.id;
             return Expanded(
               child: GestureDetector(
-                onTap: () => controller.srSelectCategory(category),
+                onTap: () => controller.srSelectCategoryModel(category),
                 child: Container(
                   height: 40.h,
                   alignment: Alignment.center,
@@ -105,7 +123,7 @@ class _CategoryTabs extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Text(
-                    category,
+                    category.name,
                     style: getTextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
@@ -143,7 +161,7 @@ class _IssueOptionTile extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.08)
+              ? AppColors.primary.withValues(alpha: 0.08)
               : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12.r),
         ),

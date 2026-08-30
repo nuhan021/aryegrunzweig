@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
@@ -20,6 +21,7 @@ class QuoteDetailsScreen extends StatefulWidget {
 
 class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
   bool agreed = true;
+  final ServicesController controller = Get.find<ServicesController>();
 
   @override
   Widget build(BuildContext context) {
@@ -94,24 +96,7 @@ class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
                             child: Column(
                               children: [
                                 _PriceRow(
-                                  'Parts and materials',
-                                  request.partsAndMaterials,
-                                ),
-                                _PriceRow('Tax', request.tax),
-                                _PriceRow(
-                                  'Discount',
-                                  -request.discount,
-                                  isNegative: true,
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8.h),
-                                  child: Divider(
-                                    color: Colors.grey.shade200,
-                                    height: 1,
-                                  ),
-                                ),
-                                _PriceRow(
-                                  'Final quoted amount',
+                                  'Quoted service total',
                                   request.quotedAmount,
                                   isBold: true,
                                 ),
@@ -123,26 +108,27 @@ class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
                     ),
                     16.verticalSpace,
 
-                    Container(
-                      width: double.maxFinite,
-                      padding: EdgeInsets.all(14.w),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Text(
-                        '"${request.quoteNote}"',
-                        style: getTextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey.shade700,
-                          lineHeight: 1.5,
-                          textAlign: TextAlign.left,
+                    if (request.quoteNote.trim().isNotEmpty)
+                      Container(
+                        width: double.maxFinite,
+                        padding: EdgeInsets.all(14.w),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Text(
+                          '"${request.quoteNote}"',
+                          style: getTextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey.shade700,
+                            lineHeight: 1.5,
+                            textAlign: TextAlign.left,
+                          ),
                         ),
                       ),
-                    ),
-                    16.verticalSpace,
+                    if (request.quoteNote.trim().isNotEmpty) 16.verticalSpace,
 
                     Text(
                       'A hold for the quoted amount will be placed on your card when you accept this quote. You will only be charged after the service is completed and approved.',
@@ -186,20 +172,11 @@ class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
 
                     SrPrimaryButton(
                       text: 'Accept quote',
-                      onPressed: agreed
-                          ? () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ServicePaymentMethodScreen(
-                                  request: request,
-                                ),
-                              ),
-                            )
-                          : () {},
+                      onPressed: agreed ? () => _acceptQuote(request) : () {},
                     ),
                     10.verticalSpace,
                     GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () => _rejectQuote(request),
                       child: Container(
                         height: 50.h,
                         width: double.maxFinite,
@@ -254,6 +231,26 @@ class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _acceptQuote(ServiceRequest request) async {
+    final accepted = await controller.acceptQuote(request);
+    if (!accepted || !mounted) return;
+    final updated = controller.requests.firstWhere(
+      (item) => item.api.id == request.api.id,
+      orElse: () => request,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ServicePaymentMethodScreen(request: updated),
+      ),
+    );
+  }
+
+  Future<void> _rejectQuote(ServiceRequest request) async {
+    final rejected = await controller.rejectQuote(request);
+    if (rejected && mounted) Navigator.pop(context);
   }
 }
 
@@ -398,17 +395,11 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _PriceRow extends StatelessWidget {
-  const _PriceRow(
-    this.label,
-    this.value, {
-    this.isBold = false,
-    this.isNegative = false,
-  });
+  const _PriceRow(this.label, this.value, {this.isBold = false});
 
   final String label;
   final double value;
   final bool isBold;
-  final bool isNegative;
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +417,7 @@ class _PriceRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${isNegative ? '-' : ''}\$${value.abs().toStringAsFixed(2)}',
+            '\$${value.toStringAsFixed(2)}',
             style: getTextStyle(
               fontSize: 13.sp,
               fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,

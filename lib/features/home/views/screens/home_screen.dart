@@ -5,11 +5,16 @@ import 'package:aryegrunzweig/features/home/views/widgets/home_activity_cards.da
 import 'package:aryegrunzweig/features/home/views/widgets/home_quick_action_cards.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/shop_products_preview.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_profile_controller.dart';
+import 'package:aryegrunzweig/features/services/controller/services_controller.dart';
+import 'package:aryegrunzweig/features/services/data/service_request_models.dart';
+import 'package:aryegrunzweig/features/orders/controller/orders_controller.dart';
+import 'package:aryegrunzweig/features/shop/data/commerce_models.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,11 +25,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final ViewProfileController _profileController;
+  late final ServicesController _servicesController;
+  late final OrdersController _ordersController;
 
   @override
   void initState() {
     super.initState();
     _profileController = Get.find<ViewProfileController>();
+    _servicesController = Get.find<ServicesController>();
+    _ordersController = Get.find<OrdersController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_profileController.profile.value == null) {
         _profileController.loadProfile();
@@ -55,25 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     18.verticalSpace,
 
-                    const QuoteReadyCard(
-                      price: '\$245.00',
-                      expiresAt: 'Expires today 4:30 PM',
-                      title: 'Central Vacuum Repair',
-                      requestId: 'SR-1048',
-                      description: 'Low suction throughout the home',
-                    ),
+                    _ServiceRequestActivity(controller: _servicesController),
 
-                    const ScheduledCard(
-                      title: 'Central Vacuum Repair',
-                      dateTime: 'Friday, Aug 1 · 9:00 – 10:30 AM',
-                      technicianName: 'Marc Anderson',
-                    ),
-
-                    const ShippedCard(
-                      orderId: '#CC-3084',
-                      title: 'Retractable Hose System',
-                      trackingNumber: 'UPS 1Z82A4X95012345678',
-                    ),
+                    _OrderActivity(controller: _ordersController),
 
                     10.verticalSpace,
 
@@ -88,6 +81,76 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+}
+
+class _OrderActivity extends StatelessWidget {
+  const _OrderActivity({required this.controller});
+  final OrdersController controller;
+
+  @override
+  Widget build(BuildContext context) => Obx(() {
+    final shipped = controller.orders.firstWhereOrNull(
+      (item) => item.api.status == CommerceOrderStatus.shipped,
+    );
+    if (shipped == null) return const SizedBox.shrink();
+    return ShippedCard(
+      orderId: '#${shipped.orderCode}',
+      title: shipped.itemName,
+      trackingNumber: shipped.trackingNumber,
+    );
+  });
+}
+
+class _ServiceRequestActivity extends StatelessWidget {
+  const _ServiceRequestActivity({required this.controller});
+
+  final ServicesController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final quote = controller.requests.firstWhereOrNull(
+        (item) => item.api.status == CustomerRequestStatus.quoteSent,
+      );
+      final scheduled = controller.requests.firstWhereOrNull(
+        (item) => item.api.status == CustomerRequestStatus.scheduled,
+      );
+      if (controller.isLoading.value && controller.requests.isEmpty) {
+        return Skeletonizer(
+          enabled: true,
+          child: QuoteReadyCard(
+            price: '\$000.00',
+            expiresAt: 'Loading quotation',
+            title: 'Service request',
+            requestId: 'SR-0000',
+            description: 'Loading your latest service activity.',
+          ),
+        );
+      }
+      return Column(
+        children: [
+          if (quote != null)
+            QuoteReadyCard(
+              price: '\$${quote.quotedAmount.toStringAsFixed(2)}',
+              expiresAt: quote.quoteValidUntil == null
+                  ? 'Quote available'
+                  : 'Expires ${DateFormat('MMM d, h:mm a').format(quote.quoteValidUntil!)}',
+              title: quote.title,
+              requestId: quote.id,
+              description: quote.issueDescription,
+            ),
+          if (scheduled != null)
+            ScheduledCard(
+              title: scheduled.title,
+              dateTime: scheduled.appointmentDate == null
+                  ? 'Appointment time pending'
+                  : '${DateFormat('EEEE, MMM d').format(scheduled.appointmentDate!)} · ${scheduled.appointmentTimeRange}',
+              technicianName: scheduled.technicianName,
+            ),
+        ],
+      );
+    });
   }
 }
 

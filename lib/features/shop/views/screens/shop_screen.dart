@@ -15,7 +15,37 @@ import 'product_details_screen.dart';
 class ShopScreen extends StatelessWidget {
   ShopScreen({super.key});
 
-  final ShopController controller = Get.put(ShopController());
+  final ShopController controller = Get.find<ShopController>();
+
+  void _showCategories(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: const Text('All products'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                controller.selectCategory(null);
+              },
+            ),
+            ...controller.categories.map(
+              (category) => ListTile(
+                title: Text(category.name),
+                trailing: Text('${category.count}'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  controller.selectCategory(category.name);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +71,7 @@ class ShopScreen extends StatelessWidget {
                         Expanded(
                           child: TextFormField(
                             controller: controller.searchController,
+                            onFieldSubmitted: (_) => controller.search(),
                             style: getTextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w400,
@@ -64,7 +95,7 @@ class ShopScreen extends StatelessWidget {
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12.r),
                                 borderSide: BorderSide(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -78,19 +109,22 @@ class ShopScreen extends StatelessWidget {
                           ),
                         ),
                         10.horizontalSpace,
-                        Container(
-                          height: 50.h,
-                          width: 50.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(
-                              color: Colors.black.withOpacity(0.1),
+                        GestureDetector(
+                          onTap: () => _showCategories(context),
+                          child: Container(
+                            height: 50.h,
+                            width: 50.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: Colors.black.withValues(alpha: 0.1),
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            Icons.tune,
-                            color: AppColors.primary,
-                            size: 20.sp,
+                            child: Icon(
+                              Icons.tune,
+                              color: AppColors.primary,
+                              size: 20.sp,
+                            ),
                           ),
                         ),
                       ],
@@ -118,17 +152,29 @@ class ShopScreen extends StatelessWidget {
                     ),
                     16.verticalSpace,
 
-                    Obx(
-                      () => GridView.builder(
+                    Obx(() {
+                      if (controller.isLoading.value &&
+                          controller.products.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (controller.errorMessage.value.isNotEmpty &&
+                          controller.products.isEmpty) {
+                        return Center(
+                          child: TextButton(
+                            onPressed: controller.loadProducts,
+                            child: Text(controller.errorMessage.value),
+                          ),
+                        );
+                      }
+                      return GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12.w,
-                              mainAxisSpacing: 12.h,
-                              mainAxisExtent: 220.h,
-                            ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12.w,
+                          mainAxisSpacing: 12.h,
+                          mainAxisExtent: 220.h,
+                        ),
                         itemCount: controller.currentPageProducts.length,
                         itemBuilder: (context, index) {
                           final product = controller.currentPageProducts[index];
@@ -141,8 +187,11 @@ class ShopScreen extends StatelessWidget {
                                     ProductDetailsScreen(product: product),
                               ),
                             ),
-                            onAddToCart: () {
-                              controller.addToCart(product);
+                            onAddToCart: () async {
+                              if (!await controller.addToCart(product) ||
+                                  !context.mounted) {
+                                return;
+                              }
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -152,8 +201,8 @@ class ShopScreen extends StatelessWidget {
                             },
                           );
                         },
-                      ),
-                    ),
+                      );
+                    }),
 
                     20.verticalSpace,
 
@@ -203,9 +252,7 @@ class _Pagination extends StatelessWidget {
                 style: getTextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w500,
-                  color: current > 1
-                      ? AppColors.primary
-                      : Colors.grey.shade400,
+                  color: current > 1 ? AppColors.primary : Colors.grey.shade400,
                 ),
               ),
             ],
@@ -238,7 +285,7 @@ class _Pagination extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: page == current
-                                  ? AppColors.primary.withOpacity(0.1)
+                                  ? AppColors.primary.withValues(alpha: 0.1)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(6.r),
                             ),
@@ -289,4 +336,3 @@ class _Pagination extends StatelessWidget {
     );
   }
 }
-
