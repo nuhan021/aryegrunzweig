@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
@@ -17,10 +18,15 @@ class PriceNegotiationScreen extends StatefulWidget {
 }
 
 class _PriceNegotiationScreenState extends State<PriceNegotiationScreen> {
-  late double parts = widget.request.partsAndMaterials;
-  late double tax = widget.request.tax;
-  late double discount = widget.request.discount;
+  late double requestedTotal = widget.request.quotedAmount;
   final noteController = TextEditingController();
+  final ServicesController controller = Get.find<ServicesController>();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.loadCounteroffers(widget.request);
+  }
 
   @override
   void dispose() {
@@ -28,17 +34,13 @@ class _PriceNegotiationScreenState extends State<PriceNegotiationScreen> {
     super.dispose();
   }
 
-  void _sendRequest() {
-    if (noteController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a negotiation note.')),
-      );
-      return;
-    }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Negotiation request sent.')));
-    Navigator.pop(context);
+  Future<void> _sendRequest() async {
+    final success = await controller.submitCounteroffer(
+      widget.request,
+      requestedTotal: requestedTotal,
+      note: noteController.text.trim(),
+    );
+    if (success && mounted) Navigator.pop(context);
   }
 
   @override
@@ -59,27 +61,14 @@ class _PriceNegotiationScreenState extends State<PriceNegotiationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _StepperField(
-                      label: 'Parts and materials',
-                      value: parts,
-                      onIncrement: () => setState(() => parts += 5),
-                      onDecrement: () =>
-                          setState(() => parts = (parts - 5).clamp(0, 999999)),
-                    ),
-                    18.verticalSpace,
-                    _StepperField(
-                      label: 'Tax',
-                      value: tax,
-                      onIncrement: () => setState(() => tax += 1),
-                      onDecrement: () =>
-                          setState(() => tax = (tax - 1).clamp(0, 999999)),
-                    ),
-                    18.verticalSpace,
-                    _StepperField(
-                      label: 'Discount',
-                      value: -discount,
-                      onIncrement: () => setState(() => discount += 5),
+                      label: 'Your proposed total',
+                      value: requestedTotal,
+                      onIncrement: () => setState(() => requestedTotal += 5),
                       onDecrement: () => setState(
-                        () => discount = (discount - 5).clamp(0, 999999),
+                        () => requestedTotal = (requestedTotal - 5).clamp(
+                          0.01,
+                          999999,
+                        ),
                       ),
                     ),
                     18.verticalSpace,
@@ -99,6 +88,35 @@ class _PriceNegotiationScreenState extends State<PriceNegotiationScreen> {
                       hintText:
                           'Please describe the problem. For example: suction is weak in the basement, the unit makes unusual noise, or an inlet valve is broken.',
                       maxLine: 5,
+                    ),
+                    20.verticalSpace,
+                    Obx(
+                      () => controller.counterofferHistory.isEmpty
+                          ? const SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Negotiation history',
+                                  style: getTextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                8.verticalSpace,
+                                ...controller.counterofferHistory.map(
+                                  (offer) => ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text(
+                                      '\$${offer.requestedTotal.toStringAsFixed(2)} · ${offer.status}',
+                                    ),
+                                    subtitle: offer.note == null
+                                        ? null
+                                        : Text(offer.note!),
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
@@ -15,6 +16,7 @@ class ServiceCompleteScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<ServicesController>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -193,7 +195,17 @@ class ServiceCompleteScreen extends StatelessWidget {
                     ),
                     24.verticalSpace,
 
-                    SrPrimaryButton(
+                    if (request.api.report?.customerConfirmedAt == null)
+                      SrPrimaryButton(
+                        text: 'Confirm completed service report',
+                        onPressed: () async {
+                          await controller.confirmReport(request);
+                        },
+                      ),
+                    if (request.api.report?.customerConfirmedAt == null)
+                      10.verticalSpace,
+
+                    SrOutlineButton(
                       text: 'View service report',
                       onPressed: () => _showServiceReport(context),
                     ),

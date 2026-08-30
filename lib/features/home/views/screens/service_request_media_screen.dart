@@ -10,7 +10,7 @@ import '../widgets/service_request_buttons.dart';
 import '../widgets/service_request_media_upload.dart';
 
 class ServiceRequestMediaScreen extends StatelessWidget {
-  ServiceRequestMediaScreen({super.key});
+  const ServiceRequestMediaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

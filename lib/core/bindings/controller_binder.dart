@@ -5,6 +5,8 @@ import 'package:aryegrunzweig/features/home/controller/home_controller.dart';
 import 'package:aryegrunzweig/features/onboarding/controller/onboarding_controller.dart';
 import 'package:aryegrunzweig/features/profile/data/profile_repository.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_profile_controller.dart';
+import 'package:aryegrunzweig/features/services/data/service_request_repository.dart';
+import 'package:aryegrunzweig/features/services/controller/services_controller.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -43,6 +45,13 @@ class ControllerBinder extends Bindings {
       () => ViewProfileController(),
       fenix: true,
     );
+
+    Get.lazyPut<ServiceRequestRepository>(
+      () => ServiceRequestRepository(Get.find<ApiClient>()),
+      fenix: true,
+    );
+
+    Get.lazyPut<ServicesController>(() => ServicesController(), fenix: true);
 
     Get.lazyPut<AppBottomNavBarController>(
       () => AppBottomNavBarController(),

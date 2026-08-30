@@ -5,7 +5,9 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/services_controller.dart';
+import '../../data/service_request_models.dart';
 import 'service_appointment_screen.dart';
+import 'service_request_overview_screen.dart';
 
 class PaymentConfirmedScreen extends StatelessWidget {
   const PaymentConfirmedScreen({super.key, required this.request});
@@ -58,7 +60,10 @@ class PaymentConfirmedScreen extends StatelessWidget {
                 onPressed: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ServiceAppointmentScreen(request: request),
+                    builder: (_) =>
+                        request.api.status == CustomerRequestStatus.scheduled
+                        ? ServiceAppointmentScreen(request: request)
+                        : ServiceRequestOverviewScreen(request: request),
                   ),
                 ),
               ),

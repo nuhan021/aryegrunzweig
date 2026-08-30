@@ -5,8 +5,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/utils/helpers/app_helper.dart';
+import '../../auth/models/auth_models.dart';
+import '../../profile/data/profile_repository.dart';
+import '../../services/data/service_request_models.dart';
+import '../../services/data/service_request_repository.dart';
+import '../../services/controller/services_controller.dart';
+
 class HomeController extends GetxController {
-  final CarouselSliderController carouselController = CarouselSliderController();
+  final ServiceRequestRepository _serviceRepository =
+      Get.find<ServiceRequestRepository>();
+  final ProfileRepository _profileRepository = Get.find<ProfileRepository>();
+  final CarouselSliderController carouselController =
+      CarouselSliderController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
@@ -47,17 +58,120 @@ class HomeController extends GetxController {
 
   var srIssueCategory = 'Maintenance'.obs;
   var srSelectedIssue = 'Unit will not turn on'.obs;
+  final srCategories = <ServiceCatalogCategory>[].obs;
+  final srAddresses = <AddressResponse>[].obs;
+  final srSelectedCategoryId = ''.obs;
+  final srSelectedIssueId = RxnString();
+  final srSelectedAddressId = ''.obs;
+  final srIsLoadingCatalog = false.obs;
+  final srIsSubmitting = false.obs;
+  final srErrorMessage = ''.obs;
 
   final TextEditingController srAddressController = TextEditingController(
     text: '1842 Maplewood Drive, Westmount',
   );
-  final TextEditingController srDescriptionController =
-      TextEditingController();
+  final TextEditingController srDescriptionController = TextEditingController();
   var srPreferredDate = Rxn<DateTime>();
   var srPreferredTime = ''.obs;
 
   var srImages = <File>[].obs;
   var srVideos = <File>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    srLoadPrerequisites();
+  }
+
+  Future<void> srLoadPrerequisites() async {
+    if (srIsLoadingCatalog.value) return;
+    srIsLoadingCatalog.value = true;
+    srErrorMessage.value = '';
+    final catalog = await _serviceRepository.getCatalog();
+    final addresses = await _profileRepository.getAddresses();
+    if (catalog.isSuccess && catalog.data != null) {
+      srCategories.assignAll(catalog.data!);
+      if (srCategories.isNotEmpty) srSelectCategoryModel(srCategories.first);
+    } else {
+      srErrorMessage.value = catalog.errorMessage;
+    }
+    if (addresses.isSuccess && addresses.data != null) {
+      srAddresses.assignAll(addresses.data!);
+      if (srAddresses.isNotEmpty) {
+        final primary = srAddresses.firstWhereOrNull((item) => item.isPrimary);
+        srSelectAddress(primary ?? srAddresses.first);
+      }
+    } else if (srErrorMessage.value.isEmpty) {
+      srErrorMessage.value = addresses.errorMessage;
+    }
+    srIsLoadingCatalog.value = false;
+  }
+
+  void srSelectCategoryModel(ServiceCatalogCategory category) {
+    srSelectedCategoryId.value = category.id;
+    srIssueCategory.value = category.name;
+    if (category.issues.isEmpty) {
+      srSelectedIssueId.value = null;
+      srSelectedIssue.value = '';
+    } else {
+      srSelectIssueModel(category.issues.first);
+    }
+  }
+
+  void srSelectIssueModel(ServiceCatalogIssue issue) {
+    srSelectedIssueId.value = issue.id;
+    srSelectedIssue.value = issue.name;
+  }
+
+  void srSelectAddress(AddressResponse address) {
+    srSelectedAddressId.value = address.id;
+    srAddressController.text =
+        '${address.line1}, ${address.city}, ${address.state} ${address.zipCode}';
+  }
+
+  Future<CustomerServiceRequest?> srSubmitRequest() async {
+    if (srIsSubmitting.value) return null;
+    if (srSelectedCategoryId.value.isEmpty ||
+        srSelectedAddressId.value.isEmpty ||
+        srDescriptionController.text.trim().isEmpty) {
+      AppHelperFunctions.showErrorSnackBar(
+        'Select a category and address, then describe the issue.',
+      );
+      return null;
+    }
+    srIsSubmitting.value = true;
+    final result = await _serviceRepository.create(
+      CreateServiceRequest(
+        categoryId: srSelectedCategoryId.value,
+        issueId: srSelectedIssueId.value,
+        addressId: srSelectedAddressId.value,
+        description: srDescriptionController.text.trim(),
+        preferredDate: srPreferredDate.value,
+        preferredTime: srPreferredTime.value,
+        imagePaths: srImages.map((file) => file.path).toList(),
+        videoPaths: srVideos.map((file) => file.path).toList(),
+      ),
+    );
+    srIsSubmitting.value = false;
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    if (Get.isRegistered<ServicesController>()) {
+      await Get.find<ServicesController>().loadRequests();
+    }
+    srResetRequest();
+    return result.data;
+  }
+
+  void srResetRequest() {
+    srDescriptionController.clear();
+    srPreferredDate.value = null;
+    srPreferredTime.value = '';
+    srImages.clear();
+    srVideos.clear();
+    if (srCategories.isNotEmpty) srSelectCategoryModel(srCategories.first);
+  }
 
   void srSelectCategory(String category) {
     srIssueCategory.value = category;
@@ -77,6 +191,12 @@ class HomeController extends GetxController {
   }
 
   Future<void> srPickImage() async {
+    if (srImages.length + srVideos.length >= 10) {
+      AppHelperFunctions.showErrorSnackBar(
+        'You can attach up to 10 images and videos in total.',
+      );
+      return;
+    }
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       srImages.add(File(image.path));
@@ -84,6 +204,12 @@ class HomeController extends GetxController {
   }
 
   Future<void> srPickVideo() async {
+    if (srImages.length + srVideos.length >= 10) {
+      AppHelperFunctions.showErrorSnackBar(
+        'You can attach up to 10 images and videos in total.',
+      );
+      return;
+    }
     final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
       srVideos.add(File(video.path));
@@ -100,6 +226,7 @@ class HomeController extends GetxController {
   void updateIndex(int index) {
     currentIndex.value = index;
   }
+
   void selectService(int index) {
     selectedServiceIndex.value = index;
   }
@@ -153,6 +280,4 @@ class HomeController extends GetxController {
 
   void removeImage(int index) => selectedImages.removeAt(index);
   void removeVideo(int index) => selectedVideos.removeAt(index);
-
-
 }

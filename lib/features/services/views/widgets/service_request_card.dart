@@ -59,7 +59,8 @@ class ServiceRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (badgeText, actionText) = _badgeAndAction;
+    final (_, actionText) = _badgeAndAction;
+    final badgeText = request.statusLabel;
     final isCompleted = request.status == ServiceRequestStatus.completed;
 
     return Container(
