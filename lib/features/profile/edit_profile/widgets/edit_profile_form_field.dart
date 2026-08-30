@@ -10,6 +10,7 @@ class EditProfileFormField extends StatelessWidget {
   final TextInputType keyboardType;
   final ValueChanged<String>? onChanged;
   final String? Function(String?)? validator;
+  final bool enabled;
 
   const EditProfileFormField({
     super.key,
@@ -20,6 +21,7 @@ class EditProfileFormField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.onChanged,
     this.validator,
+    this.enabled = true,
   });
 
   @override
@@ -46,6 +48,7 @@ class EditProfileFormField extends StatelessWidget {
             keyboardType: keyboardType,
             onChanged: onChanged,
             validator: validator,
+            enabled: enabled,
             style: getTextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w400,

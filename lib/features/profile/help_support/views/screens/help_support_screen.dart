@@ -84,6 +84,74 @@ class HelpSupportScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 32.h),
 
+                      Text(
+                        'Send us a message',
+                        style: getTextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 14.h),
+                      TextField(
+                        controller: controller.fullNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Full name *',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextField(
+                        controller: controller.emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email *',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextField(
+                        controller: controller.phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextField(
+                        controller: controller.serviceController,
+                        decoration: const InputDecoration(
+                          labelText: 'Service',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextField(
+                        controller: controller.messageController,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Message *',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 14.h),
+                      Obx(
+                        () => SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: controller.isSubmitting.value
+                                ? null
+                                : controller.submitContact,
+                            child: Text(
+                              controller.isSubmitting.value
+                                  ? 'Sending...'
+                                  : 'Send message',
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 32.h),
+
                       // Frequently Asked Questions Section
                       Text(
                         'Frequently Asked Questions',

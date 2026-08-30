@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/constants/api_constants.dart';
+import '../../../core/utils/logging/logger.dart';
 import '../../../routes/app_routes.dart';
 import '../data/auth_repository.dart';
 import '../models/auth_models.dart';
@@ -112,15 +113,24 @@ class AuthController extends GetxController {
     final email = loginEmailController.text.trim().toLowerCase();
     final password = loginPasswordController.text;
     if (!_isValidEmail(email) || password.isEmpty) {
+      AppLoggerHelper.warning(
+        '[Auth] Login validation failed: invalid email or password.',
+      );
       return _finishWithError('Enter a valid email and password.');
     }
 
     final result = await _repository.login(email: email, password: password);
     if (!result.isSuccess || result.data == null) {
+      AppLoggerHelper.error(
+        '[Auth] Login failed (${result.statusCode}): ${result.errorMessage}',
+      );
       return _finishWithError(result.errorMessage);
     }
     final session = result.data!;
     if (session.user.role == UserRole.admin) {
+      AppLoggerHelper.warning(
+        '[Auth] Login rejected: admin role is unsupported.',
+      );
       return _finishWithError('Admin accounts are not supported in this app.');
     }
 
@@ -133,7 +143,12 @@ class AuthController extends GetxController {
   Future<bool> signup() async {
     if (!_beginRequest()) return false;
     final validationError = _validateSignup();
-    if (validationError != null) return _finishWithError(validationError);
+    if (validationError != null) {
+      AppLoggerHelper.warning(
+        '[Auth] Signup validation failed: $validationError',
+      );
+      return _finishWithError(validationError);
+    }
 
     final common = _customerSignupRequest();
     final result = isTechnicianSignup
@@ -162,6 +177,10 @@ class AuthController extends GetxController {
         : await _repository.signupCustomer(common);
 
     if (!result.isSuccess || result.data == null) {
+      AppLoggerHelper.error(
+        '[Auth] ${isTechnicianSignup ? 'Technician' : 'Customer'} signup '
+        'failed (${result.statusCode}): ${result.errorMessage}',
+      );
       return _finishWithError(result.errorMessage);
     }
     pendingVerificationEmail = common.email;

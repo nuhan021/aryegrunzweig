@@ -14,7 +14,7 @@ class OnboardingScreen extends StatelessWidget {
   final OnboardingController onboardingController =
       Get.find<OnboardingController>();
 
-  List<OnboardingContent> contents = [
+  final List<OnboardingContent> contents = [
     OnboardingContent(
       title: 'Book Services Instantly',
       image: ImagePath.onboarding1,
