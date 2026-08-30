@@ -65,90 +65,70 @@ class _TechnicianJobsScreenState extends State<TechnicianJobsScreen> {
   }
 
   Widget _buildTodayJobs() {
+    return Obx(() => _jobList(_jobsController.todayJobs));
+  }
+
+  Widget _buildUpcomingJobs() {
+    return Obx(() => _jobList(_jobsController.upcomingJobs));
+  }
+
+  Widget _buildCompletedJobs() {
+    return Obx(() => _jobList(_jobsController.completedJobs));
+  }
+
+  Widget _jobList(List<TechnicianJob> jobs) {
+    if (_jobsController.isLoading.value && jobs.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (jobs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 40),
+        child: Text('No jobs in this section.'),
+      );
+    }
     return Column(
       children: [
-        Obx(() {
-          final status = _jobsController.status.value;
-          return _JobCard(
-            status: status == TechnicianJobStatus.completed
-                ? 'COMPLETED'
-                : 'In Progress',
-            statusKind: status == TechnicianJobStatus.completed
-                ? _StatusKind.completed
-                : _StatusKind.inProgress,
-            time: '9:00 AM',
-            customer: _jobsController.job.customerName,
-            service: _jobsController.job.serviceName,
-            address: _jobsController.job.address,
-            issue:
-                'Unit turns on but there is very low suction throughout the home.',
-            primaryLabel: 'Open Job',
-            secondaryLabel: 'Update Report',
-            onPrimary: _openSarahJob,
-            onSecondary: _openSarahReport,
-          );
-        }),
-        14.verticalSpace,
-        _JobCard(
-          status: 'SCHEDULED',
-          statusKind: _StatusKind.scheduled,
-          time: '12:30 PM',
-          customer: 'David Chen',
-          service: 'Low Suction',
-          address: '55 Park Avenue, Montréal',
-          issue:
-              'Customer reports low suction on the first floor and basement.',
-          primaryLabel: 'View details',
-          onPrimary: () => _showUnavailable('David Chen'),
-        ),
-        14.verticalSpace,
-        _JobCard(
-          status: 'SCHEDULED',
-          statusKind: _StatusKind.scheduled,
-          time: '03:30 PM',
-          customer: 'Amelia Roberts',
-          service: 'Broken Inlet Valve',
-          address: '909 Rue Sherbrooke O., Montréal',
-          issue:
-              'Inlet valve in the living room is cracked and no longer seals properly.',
-          primaryLabel: 'View details',
-          onPrimary: () => _showUnavailable('Amelia Roberts'),
-        ),
+        for (var index = 0; index < jobs.length; index++) ...[
+          _jobCard(jobs[index]),
+          if (index < jobs.length - 1) 14.verticalSpace,
+        ],
       ],
     );
   }
 
-  Widget _buildUpcomingJobs() {
+  Widget _jobCard(TechnicianJob job) {
+    final completed = job.uiStatus == TechnicianJobStatus.completed;
+    final inProgress = job.uiStatus == TechnicianJobStatus.inProgress;
+    final reportSubmitted = job.uiStatus == TechnicianJobStatus.reportSubmitted;
     return _JobCard(
-      status: 'SCHEDULED',
-      statusKind: _StatusKind.scheduled,
-      time: '12:30 PM',
-      customer: 'David Chen',
-      service: 'Low Suction',
-      address: '55 Park Avenue, Montréal',
-      issue: 'Customer reports low suction on the first floor and basement.',
-      primaryLabel: 'View details',
-      onPrimary: () => _showUnavailable('David Chen'),
-    );
-  }
-
-  Widget _buildCompletedJobs() {
-    return _JobCard(
-      status: 'COMPLETED',
-      statusKind: _StatusKind.completed,
-      jobId: 'SR-1047',
-      customer: 'John Miller',
-      service: 'Retractable Hose Repair',
-      dateAndTime: 'Wednesday, July 30 · 2:00 PM',
-      address: '77 Lakeshore Dr., Pointe-Claire',
-      issue: 'Repaired hose retraction mechanism.',
-      primaryLabel: 'View details',
-      secondaryLabel: 'View Report',
-      subduedActions: true,
-      onPrimary: () => _showUnavailable('John Miller'),
-      onSecondary: () => _showMessage(
-        'The completed report for SR-1047 is not available yet.',
-      ),
+      status: completed
+          ? 'COMPLETED'
+          : reportSubmitted
+          ? 'REPORT SUBMITTED'
+          : inProgress
+          ? 'IN PROGRESS'
+          : 'SCHEDULED',
+      statusKind: completed
+          ? _StatusKind.completed
+          : inProgress || reportSubmitted
+          ? _StatusKind.inProgress
+          : _StatusKind.scheduled,
+      jobId: job.id,
+      time: job.appointmentTime,
+      customer: job.customerName,
+      service: job.serviceName,
+      dateAndTime: job.requestedDate,
+      address: job.address,
+      issue: job.issueDescription,
+      primaryLabel: completed ? 'View details' : 'Open Job',
+      secondaryLabel: completed || inProgress || reportSubmitted
+          ? 'View Report'
+          : null,
+      subduedActions: completed,
+      onPrimary: () => _openJob(job),
+      onSecondary: completed || inProgress || reportSubmitted
+          ? () => _openReport(job)
+          : null,
     );
   }
 
@@ -158,7 +138,8 @@ class _TechnicianJobsScreenState extends State<TechnicianJobsScreen> {
     }
   }
 
-  void _openSarahJob() {
+  void _openJob(TechnicianJob job) {
+    _jobsController.selectJob(job);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TechnicianJobDetailsScreen(controller: _jobsController),
@@ -166,23 +147,14 @@ class _TechnicianJobsScreenState extends State<TechnicianJobsScreen> {
     );
   }
 
-  void _openSarahReport() {
+  void _openReport(TechnicianJob job) {
+    _jobsController.selectJob(job);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) =>
             TechnicianServiceReportScreen(controller: _jobsController),
       ),
     );
-  }
-
-  void _showUnavailable(String customer) {
-    _showMessage('$customer job details are not available yet.');
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

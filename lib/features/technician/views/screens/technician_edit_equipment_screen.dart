@@ -41,9 +41,9 @@ class _TechnicianEditEquipmentScreenState
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    widget.controller.updateEquipment(
+    final saved = await widget.controller.updateEquipment(
       unit: _controllers[0].text,
       brand: _controllers[1].text,
       modelName: _controllers[2].text,
@@ -51,6 +51,7 @@ class _TechnicianEditEquipmentScreenState
       unitLocation: _controllers[4].text,
       condition: _controllers[5].text,
     );
+    if (!saved || !mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Equipment details saved.')));

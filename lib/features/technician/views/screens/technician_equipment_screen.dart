@@ -26,6 +26,9 @@ class TechnicianEquipmentScreen extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 final floors = controller.inletQuantities.entries.toList();
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
                 return SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
                   child: Column(
@@ -121,14 +124,13 @@ class TechnicianEquipmentScreen extends StatelessWidget {
                         ),
                       ),
                       12.verticalSpace,
-                      const _InfoTable(
-                        title:
-                            'Feature                         Qty              Location',
-                        rows: [
-                          ('VacPan', '01        Kitchen'),
-                          ('Spot Vacuum', '01        Garage'),
-                          ('Wally Flex', '01        Laundry room'),
-                        ],
+                      _InfoTable(
+                        title: 'Features',
+                        rows: controller.additionalFeatures.isEmpty
+                            ? const [('None recorded', '')]
+                            : controller.additionalFeatures
+                                  .map((feature) => (feature, ''))
+                                  .toList(growable: false),
                       ),
                       40.verticalSpace,
                       _OutlineButton(
