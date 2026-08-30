@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/technician_jobs_controller.dart';
+import '../../controller/technician_equipment_controller.dart';
 import 'technician_equipment_screen.dart';
 import 'technician_job_photos_screen.dart';
 import 'technician_service_report_screen.dart';
@@ -203,6 +204,9 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
                                   controller.status.value ==
                                       TechnicianJobStatus.inProgress
                                   ? 'Job is in progress'
+                                  : controller.status.value ==
+                                        TechnicianJobStatus.reportSubmitted
+                                  ? 'Report submitted'
                                   : 'Mark as in progress',
                               isPrimary: true,
                               onTap: controller.markInProgress,
@@ -223,10 +227,14 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
                             10.verticalSpace,
                             _LargeAction(
                               text: 'Open equipment & inlet details',
-                              onTap: () => _push(
-                                context,
-                                const TechnicianEquipmentScreen(),
-                              ),
+                              onTap: () {
+                                Get.find<TechnicianEquipmentController>()
+                                    .loadEquipment();
+                                _push(
+                                  context,
+                                  const TechnicianEquipmentScreen(),
+                                );
+                              },
                             ),
                             10.verticalSpace,
                             _LargeAction(
@@ -293,8 +301,10 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
     );
     notesController.dispose();
     if (notes == null) return;
-    controller.updateNotes(notes);
-    if (context.mounted) _showMessage(context, 'Technician notes saved.');
+    final saved = await controller.updateNotes(notes);
+    if (saved && context.mounted) {
+      _showMessage(context, 'Technician notes saved.');
+    }
   }
 }
 
@@ -309,6 +319,7 @@ class _JobHeader extends StatelessWidget {
     final statusText = switch (status) {
       TechnicianJobStatus.assigned => 'ASSIGNED',
       TechnicianJobStatus.inProgress => 'IN PROGRESS',
+      TechnicianJobStatus.reportSubmitted => 'REPORT SUBMITTED',
       TechnicianJobStatus.completed => 'COMPLETED',
     };
 

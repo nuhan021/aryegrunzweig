@@ -22,7 +22,7 @@ class TechnicianHomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const _DashboardHeader(),
+            _DashboardHeader(controller: controller),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 28.h),
@@ -30,19 +30,14 @@ class TechnicianHomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Obx(() {
-                      final isInProgress =
-                          controller.status.value ==
-                          TechnicianJobStatus.inProgress;
-                      final isCompleted =
-                          controller.status.value ==
-                          TechnicianJobStatus.completed;
+                      final stats = controller.homeStats.value;
                       return Column(
                         children: [
                           Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: _StatCard(
-                                  value: '03',
+                                  value: '${stats?.jobsToday ?? 0}',
                                   label: 'Jobs today',
                                   icon: Icons.work_outline_rounded,
                                   backgroundColor: Color(0xFFEDF5FF),
@@ -52,7 +47,7 @@ class TechnicianHomeScreen extends StatelessWidget {
                               12.horizontalSpace,
                               Expanded(
                                 child: _StatCard(
-                                  value: isInProgress ? '01' : '00',
+                                  value: '${stats?.inProgress ?? 0}',
                                   label: 'In progress',
                                   icon: Icons.query_stats_rounded,
                                   backgroundColor: const Color(0xFFFFFAE9),
@@ -66,7 +61,7 @@ class TechnicianHomeScreen extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: _StatCard(
-                                  value: isCompleted ? '13' : '12',
+                                  value: '${stats?.completedThisMonth ?? 0}',
                                   label: 'Completed this month',
                                   icon: Icons.checklist_rounded,
                                   backgroundColor: const Color(0xFFECFBF5),
@@ -74,9 +69,9 @@ class TechnicianHomeScreen extends StatelessWidget {
                                 ),
                               ),
                               12.horizontalSpace,
-                              const Expanded(
+                              Expanded(
                                 child: _StatCard(
-                                  value: '4.9',
+                                  value: '${stats?.averageRating ?? 0}',
                                   label: 'Avg. customer rating',
                                   icon: Icons.star_outline_rounded,
                                   backgroundColor: Color(0xFFEDF5FF),
@@ -99,69 +94,20 @@ class TechnicianHomeScreen extends StatelessWidget {
                     ),
                     16.verticalSpace,
                     Obx(() {
-                      final status = controller.status.value;
-                      final statusText = switch (status) {
-                        TechnicianJobStatus.assigned => 'Assigned',
-                        TechnicianJobStatus.inProgress => 'In Progress',
-                        TechnicianJobStatus.completed => 'Completed',
-                      };
-                      return _TodayJobCard(
-                        status: statusText,
-                        time: '9:00 AM',
-                        customer: controller.job.customerName,
-                        service: controller.job.serviceName,
-                        address: controller.job.address,
-                        issue:
-                            'Unit turns on but there is very low suction throughout the home.',
-                        primaryAction: status == TechnicianJobStatus.completed
-                            ? 'View Job'
-                            : 'Open Job',
-                        secondaryAction: 'Update Report',
-                        onPrimary: () => _openJob(context, controller),
-                        onSecondary: () => _openReport(context, controller),
+                      final jobs = controller.todayJobs;
+                      if (controller.isLoading.value && jobs.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (jobs.isEmpty) return const Text('No jobs today.');
+                      return Column(
+                        children: [
+                          for (var index = 0; index < jobs.length; index++) ...[
+                            _dashboardJob(context, controller, jobs[index]),
+                            if (index < jobs.length - 1) 14.verticalSpace,
+                          ],
+                        ],
                       );
                     }),
-                    14.verticalSpace,
-                    _TodayJobCard(
-                      status: 'SCHEDULED',
-                      time: '12:30 PM',
-                      customer: 'David Chen',
-                      service: 'Low Suction',
-                      address: '55 Park Avenue, Montréal',
-                      issue:
-                          'Customer reports low suction on the first floor and basement.',
-                      primaryAction: 'View details',
-                      onPrimary: () => _showMessage(
-                        context,
-                        'David Chen job details are not available yet.',
-                      ),
-                    ),
-                    14.verticalSpace,
-                    _TodayJobCard(
-                      status: 'SCHEDULED',
-                      time: '03:30 PM',
-                      customer: 'Amelia Roberts',
-                      service: 'Broken Inlet Valve',
-                      address: '909 Rue Sherbrooke O., Montréal',
-                      issue:
-                          'Inlet valve in the living room is cracked and no longer seals properly.',
-                      primaryAction: 'View details',
-                      onPrimary: () => _showMessage(
-                        context,
-                        'Amelia Roberts job details are not available yet.',
-                      ),
-                    ),
-                    16.verticalSpace,
-                    _UpNextCard(
-                      onCall: () => _showMessage(
-                        context,
-                        'Calling David Chen: (514) 555-0142',
-                      ),
-                      onDirections: () => _showMessage(
-                        context,
-                        'Opening directions to 55 Park Avenue, Montréal',
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -169,6 +115,45 @@ class TechnicianHomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _dashboardJob(
+    BuildContext context,
+    TechnicianJobsController controller,
+    TechnicianJob job,
+  ) {
+    final status = switch (job.uiStatus) {
+      TechnicianJobStatus.assigned => 'SCHEDULED',
+      TechnicianJobStatus.inProgress => 'IN PROGRESS',
+      TechnicianJobStatus.reportSubmitted => 'REPORT SUBMITTED',
+      TechnicianJobStatus.completed => 'COMPLETED',
+    };
+    return _TodayJobCard(
+      status: status,
+      time: job.appointmentTime,
+      customer: job.customerName,
+      service: job.serviceName,
+      address: job.address,
+      issue: job.issueDescription,
+      primaryAction: 'Open Job',
+      secondaryAction:
+          job.uiStatus == TechnicianJobStatus.inProgress ||
+              job.uiStatus == TechnicianJobStatus.reportSubmitted
+          ? 'Update Report'
+          : null,
+      onPrimary: () {
+        controller.selectJob(job);
+        _openJob(context, controller);
+      },
+      onSecondary:
+          job.uiStatus == TechnicianJobStatus.inProgress ||
+              job.uiStatus == TechnicianJobStatus.reportSubmitted
+          ? () {
+              controller.selectJob(job);
+              _openReport(context, controller);
+            }
+          : null,
     );
   }
 
@@ -187,16 +172,12 @@ class TechnicianHomeScreen extends StatelessWidget {
       ),
     );
   }
-
-  void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
 }
 
 class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader();
+  const _DashboardHeader({required this.controller});
+
+  final TechnicianJobsController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -213,22 +194,26 @@ class _DashboardHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Friday, August 01',
-                  style: getTextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
+                Obx(
+                  () => Text(
+                    controller.homeStats.value?.date ?? '',
+                    style: getTextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 5.verticalSpace,
-                Text(
-                  'Good Morning, Marc',
-                  style: getTextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    textAlign: TextAlign.left,
+                Obx(
+                  () => Text(
+                    'Good Morning, ${controller.homeStats.value?.firstName ?? ''}',
+                    style: getTextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      textAlign: TextAlign.left,
+                    ),
                   ),
                 ),
               ],
@@ -512,131 +497,6 @@ class _DashboardAction extends StatelessWidget {
             fontSize: 12.sp,
             fontWeight: FontWeight.w500,
             color: isPrimary ? Colors.white : AppColors.primary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _UpNextCard extends StatelessWidget {
-  const _UpNextCard({required this.onCall, required this.onDirections});
-
-  final VoidCallback onCall;
-  final VoidCallback onDirections;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(13.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(5.r),
-                ),
-                child: Text(
-                  'UP NEXT',
-                  style: getTextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              Text(
-                '12:30 PM',
-                style: getTextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          10.verticalSpace,
-          Text(
-            'David Chen',
-            style: getTextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          4.verticalSpace,
-          Text(
-            'Low Suction · Est. 1 hour',
-            style: getTextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-            ),
-          ),
-          4.verticalSpace,
-          Text(
-            '55 Park Avenue, Montréal',
-            style: getTextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-            ),
-          ),
-          14.verticalSpace,
-          Row(
-            children: [
-              Expanded(
-                child: _UpNextAction(label: 'Call customer', onTap: onCall),
-              ),
-              12.horizontalSpace,
-              Expanded(
-                child: _UpNextAction(
-                  label: 'Get directions',
-                  onTap: onDirections,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UpNextAction extends StatelessWidget {
-  const _UpNextAction({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 44.h,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-        ),
-        child: Text(
-          label,
-          style: getTextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
           ),
         ),
       ),

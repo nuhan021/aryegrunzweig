@@ -34,8 +34,9 @@ class _TechnicianInletQuantitiesScreenState
     });
   }
 
-  void _save() {
-    widget.controller.replaceInletQuantities(_draft);
+  Future<void> _save() async {
+    final saved = await widget.controller.replaceInletQuantities(_draft);
+    if (!saved || !mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Inlet quantities saved.')));

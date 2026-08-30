@@ -33,6 +33,9 @@ class ApiConstants {
   static const String checkoutOrders = '/api/checkout/orders';
   static const String checkoutCart = '/api/checkout/cart';
   static const String orders = '/api/orders';
+  static const String technician = '/api/technician';
+  static const String technicianRequests = '/api/technician/service-requests';
+  static const String technicianHomeStats = '/api/technician/home-stats';
 
   // Swagger SignupDto currently requires this version and the public settings
   // response does not expose one yet. Replace it when that contract is added.

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/technician_jobs_controller.dart';
+import '../../data/technician_models.dart';
 
 class TechnicianServiceReportScreen extends StatefulWidget {
   const TechnicianServiceReportScreen({super.key, required this.controller});
@@ -51,6 +53,32 @@ class _TechnicianServiceReportScreenState
     _arrivalController = TextEditingController(text: '9:05 AM');
     _departureController = TextEditingController(text: '10:35 AM');
     _followUpController = TextEditingController();
+    _loadExistingReport();
+  }
+
+  Future<void> _loadExistingReport() async {
+    await widget.controller.loadReport();
+    final report = widget.controller.currentReport.value;
+    if (report == null || !mounted) return;
+    setState(() {
+      _selectedStatus = _statuses.contains(report.repairStatus)
+          ? report.repairStatus
+          : _statuses.first;
+      _workController.text = report.workPerformed;
+      _notesController.text = report.technicianNotes ?? '';
+      _followUpRequired = report.followUpRequired;
+      _followUpController.text = report.followUpNotes ?? '';
+      if (report.arrivalTime != null) {
+        _arrivalController.text = DateFormat(
+          'h:mm a',
+        ).format(report.arrivalTime!.toLocal());
+      }
+      if (report.departureTime != null) {
+        _departureController.text = DateFormat(
+          'h:mm a',
+        ).format(report.departureTime!.toLocal());
+      }
+    });
   }
 
   @override
@@ -94,7 +122,7 @@ class _TechnicianServiceReportScreenState
     setState(() => _parts.add(_PartItem(name: part.trim())));
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_workController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Describe the work performed.')),
@@ -120,12 +148,40 @@ class _TechnicianServiceReportScreenState
       );
       return;
     }
-    widget.controller.updateNotes(_notesController.text);
-    widget.controller.markCompleted();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Service report submitted for review.')),
+    final saved = await widget.controller.submitReport(
+      TechnicianReportPayload(
+        repairStatus: _selectedStatus,
+        workPerformed: _workController.text.trim(),
+        technicianNotes: _notesController.text.trim(),
+        partsUsed: _parts
+            .map(
+              (part) =>
+                  TechnicianPartUsed(name: part.name, quantity: part.quantity),
+            )
+            .toList(growable: false),
+        followUpRequired: _followUpRequired,
+        followUpNotes: _followUpController.text.trim(),
+        arrivalTime: _parseVisitTime(_arrivalController.text),
+        departureTime: _parseVisitTime(_departureController.text),
+      ),
     );
-    Navigator.pop(context);
+    if (saved && mounted) Navigator.pop(context);
+  }
+
+  DateTime? _parseVisitTime(String value) {
+    final match = RegExp(
+      r'^(\d{1,2}):(\d{2})\s*(AM|PM)$',
+      caseSensitive: false,
+    ).firstMatch(value.trim());
+    if (match == null) return null;
+    var hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2)!);
+    final meridiem = match.group(3)!.toUpperCase();
+    if (hour == 12) hour = 0;
+    if (meridiem == 'PM') hour += 12;
+    final date =
+        widget.controller.job.api.scheduledStart?.toLocal() ?? DateTime.now();
+    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 
   @override

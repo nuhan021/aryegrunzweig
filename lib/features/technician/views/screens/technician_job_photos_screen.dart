@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../controller/technician_jobs_controller.dart';
 
 class TechnicianJobPhotosScreen extends StatefulWidget {
   const TechnicianJobPhotosScreen({super.key});
@@ -19,6 +21,8 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
   final ImagePicker _picker = ImagePicker();
   final List<XFile?> _beforePhotos = List<XFile?>.filled(3, null);
   final List<XFile?> _afterPhotos = List<XFile?>.filled(3, null);
+  final TechnicianJobsController _jobs = Get.find<TechnicianJobsController>();
+  bool _uploading = false;
 
   Future<void> _pickPhoto(List<XFile?> target, int index) async {
     final photo = await _picker.pickImage(
@@ -29,7 +33,7 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
     setState(() => target[index] = photo);
   }
 
-  void _upload() {
+  Future<void> _upload() async {
     final hasBeforePhoto = _beforePhotos.any((photo) => photo != null);
     final hasAfterPhoto = _afterPhotos.any((photo) => photo != null);
     if (!hasBeforePhoto || !hasAfterPhoto) {
@@ -40,6 +44,17 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
       );
       return;
     }
+    setState(() => _uploading = true);
+    var successful = true;
+    for (final photo in _beforePhotos.whereType<XFile>()) {
+      successful = await _jobs.uploadMedia('BEFORE', photo.path) && successful;
+    }
+    for (final photo in _afterPhotos.whereType<XFile>()) {
+      successful = await _jobs.uploadMedia('AFTER', photo.path) && successful;
+    }
+    if (!mounted) return;
+    setState(() => _uploading = false);
+    if (!successful) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Job photos uploaded successfully.')),
     );
@@ -81,7 +96,7 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
             Padding(
               padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 22.h),
               child: GestureDetector(
-                onTap: _upload,
+                onTap: _uploading ? null : _upload,
                 child: Container(
                   height: 54.h,
                   width: double.maxFinite,
@@ -91,7 +106,7 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
                     borderRadius: BorderRadius.circular(11.r),
                   ),
                   child: Text(
-                    'Upload Photos',
+                    _uploading ? 'Uploading...' : 'Upload Photos',
                     style: getTextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
