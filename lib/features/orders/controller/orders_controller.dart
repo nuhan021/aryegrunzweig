@@ -97,6 +97,21 @@ class OrdersController extends GetxController {
     return updated;
   }
 
+  Future<ShopOrder?> orderById(String id) async {
+    final cached = orders.firstWhereOrNull(
+      (item) => item.id == id || item.orderCode == id,
+    );
+    if (cached != null) return refreshOrder(cached);
+    final result = await _repository.order(id);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    final order = ShopOrder(api: result.data!);
+    orders.add(order);
+    return order;
+  }
+
   Future<bool> cancelOrder(ShopOrder order) async {
     if (!order.api.canCancel || isActionLoading.value) return false;
     isActionLoading.value = true;

@@ -125,6 +125,25 @@ class TechnicianJobsController extends GetxController {
     loadReport();
   }
 
+  Future<TechnicianJob?> selectJobById(String id) async {
+    final cached = jobs.firstWhereOrNull(
+      (item) => item.api.id == id || item.id == id,
+    );
+    if (cached != null) {
+      selectJob(cached);
+      return refreshSelected();
+    }
+    final result = await _repository.job(id);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    final job = TechnicianJob(api: result.data!);
+    jobs.add(job);
+    selectJob(job);
+    return job;
+  }
+
   Future<TechnicianJob?> refreshSelected() async {
     final selected = selectedJob.value;
     if (selected == null) return null;

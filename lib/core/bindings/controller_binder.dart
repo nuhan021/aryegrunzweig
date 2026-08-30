@@ -10,6 +10,8 @@ import 'package:aryegrunzweig/features/services/controller/services_controller.d
 import 'package:aryegrunzweig/features/shop/controller/shop_controller.dart';
 import 'package:aryegrunzweig/features/shop/data/commerce_repository.dart';
 import 'package:aryegrunzweig/features/orders/controller/orders_controller.dart';
+import 'package:aryegrunzweig/features/notifications/controllers/notifications_controller.dart';
+import 'package:aryegrunzweig/features/notifications/data/notifications_repository.dart';
 import 'package:aryegrunzweig/features/technician/controller/technician_equipment_controller.dart';
 import 'package:aryegrunzweig/features/technician/controller/technician_jobs_controller.dart';
 import 'package:aryegrunzweig/features/technician/data/technician_repository.dart';
@@ -73,6 +75,15 @@ class ControllerBinder extends Bindings {
     );
 
     Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+
+    Get.lazyPut<NotificationsRepository>(
+      () => NotificationsRepository(Get.find<ApiClient>()),
+      fenix: true,
+    );
+    Get.lazyPut<NotificationsController>(
+      () => NotificationsController(),
+      fenix: true,
+    );
 
     Get.lazyPut<TechnicianRepository>(
       () => TechnicianRepository(Get.find<ApiClient>()),

@@ -1,15 +1,16 @@
 import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
+import 'package:aryegrunzweig/core/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class NotificationHeader extends StatelessWidget {
   final VoidCallback onBackPressed;
-  final VoidCallback onClearAll;
+  final VoidCallback onMarkAllRead;
 
   const NotificationHeader({
     super.key,
     required this.onBackPressed,
-    required this.onClearAll,
+    required this.onMarkAllRead,
   });
 
   @override
@@ -17,7 +18,7 @@ class NotificationHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: ShapeDecoration(
-        color: const Color(0xFF1C4F50),
+        color: AppColors.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(10.r),
@@ -65,9 +66,9 @@ class NotificationHeader extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: onClearAll,
+                  onTap: onMarkAllRead,
                   child: Text(
-                    'Clear All',
+                    'Mark all read',
                     style: getTextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,

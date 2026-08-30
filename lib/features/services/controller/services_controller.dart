@@ -116,6 +116,21 @@ class ServicesController extends GetxController {
     return updated;
   }
 
+  Future<ServiceRequest?> requestById(String id) async {
+    final cached = requests.firstWhereOrNull(
+      (item) => item.api.id == id || item.id == id,
+    );
+    if (cached != null) return refreshOne(cached);
+    final result = await _repository.getOne(id);
+    if (!result.isSuccess || result.data == null) {
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      return null;
+    }
+    final request = _toViewModel(result.data!);
+    requests.add(request);
+    return request;
+  }
+
   Future<bool> acceptQuote(ServiceRequest request) async {
     if (isActionLoading.value) return false;
     isActionLoading.value = true;
