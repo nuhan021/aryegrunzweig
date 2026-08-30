@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../notifications/controllers/notifications_controller.dart';
 import '../../controller/technician_jobs_controller.dart';
 import 'technician_job_details_screen.dart';
 import 'technician_service_report_screen.dart';
@@ -181,6 +182,7 @@ class _DashboardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final notifications = Get.find<NotificationsController>();
     return Container(
       width: double.maxFinite,
       padding: EdgeInsets.fromLTRB(16.w, 22.h, 16.w, 24.h),
@@ -230,13 +232,17 @@ class _DashboardHeader extends StatelessWidget {
               Positioned(
                 top: -1.h,
                 right: 0,
-                child: Container(
-                  height: 8.w,
-                  width: 8.w,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF3B45),
-                    shape: BoxShape.circle,
-                  ),
+                child: Obx(
+                  () => notifications.unreadCount == 0
+                      ? const SizedBox.shrink()
+                      : Container(
+                          height: 8.w,
+                          width: 8.w,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF3B45),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                 ),
               ),
             ],

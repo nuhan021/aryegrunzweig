@@ -8,6 +8,7 @@ import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_pro
 import 'package:aryegrunzweig/features/services/controller/services_controller.dart';
 import 'package:aryegrunzweig/features/services/data/service_request_models.dart';
 import 'package:aryegrunzweig/features/orders/controller/orders_controller.dart';
+import 'package:aryegrunzweig/features/notifications/controllers/notifications_controller.dart';
 import 'package:aryegrunzweig/features/shop/data/commerce_models.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -161,6 +162,7 @@ class HomeAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final notifications = Get.find<NotificationsController>();
     return Container(
       width: double.maxFinite,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -231,17 +233,21 @@ class HomeAppBar extends StatelessWidget {
                     Positioned(
                       top: -2.h,
                       right: -2.w,
-                      child: Container(
-                        height: 8.w,
-                        width: 8.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.redAccent,
-                          border: Border.all(
-                            color: AppColors.primary,
-                            width: 1.5,
-                          ),
-                        ),
+                      child: Obx(
+                        () => notifications.unreadCount == 0
+                            ? const SizedBox.shrink()
+                            : Container(
+                                height: 8.w,
+                                width: 8.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.redAccent,
+                                  border: Border.all(
+                                    color: AppColors.primary,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                   ],

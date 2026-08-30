@@ -9,12 +9,14 @@ class NotificationCard extends StatelessWidget {
   final notif_model.Notification notification;
   final VoidCallback? onDelete;
   final VoidCallback? onMarkAsRead;
+  final VoidCallback? onTap;
 
   const NotificationCard({
     super.key,
     required this.notification,
     this.onDelete,
     this.onMarkAsRead,
+    this.onTap,
   });
 
   IconData _getIcon() {
@@ -54,9 +56,8 @@ class NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (!notification.isRead) {
-          onMarkAsRead?.call();
-        }
+        onTap?.call();
+        if (onTap == null && !notification.isRead) onMarkAsRead?.call();
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 16.h),
