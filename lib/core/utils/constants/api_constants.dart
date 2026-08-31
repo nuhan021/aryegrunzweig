@@ -37,6 +37,8 @@ class ApiConstants {
   static const String technicianRequests = '/api/technician/service-requests';
   static const String technicianHomeStats = '/api/technician/home-stats';
   static const String notifications = '/api/notifications';
+  static const String notificationStream = '/api/notifications/stream';
+  static const String conversations = '/api/conversations';
 
   // Swagger SignupDto currently requires this version and the public settings
   // response does not expose one yet. Replace it when that contract is added.

@@ -12,6 +12,8 @@ import 'package:aryegrunzweig/features/shop/data/commerce_repository.dart';
 import 'package:aryegrunzweig/features/orders/controller/orders_controller.dart';
 import 'package:aryegrunzweig/features/notifications/controllers/notifications_controller.dart';
 import 'package:aryegrunzweig/features/notifications/data/notifications_repository.dart';
+import 'package:aryegrunzweig/features/notifications/data/notification_stream_service.dart';
+import 'package:aryegrunzweig/features/chat/individual_chat/data/chat_repository.dart';
 import 'package:aryegrunzweig/features/technician/controller/technician_equipment_controller.dart';
 import 'package:aryegrunzweig/features/technician/controller/technician_jobs_controller.dart';
 import 'package:aryegrunzweig/features/technician/data/technician_repository.dart';
@@ -80,8 +82,16 @@ class ControllerBinder extends Bindings {
       () => NotificationsRepository(Get.find<ApiClient>()),
       fenix: true,
     );
+    Get.lazyPut<NotificationStreamService>(
+      () => const NotificationStreamService(),
+      fenix: true,
+    );
     Get.lazyPut<NotificationsController>(
       () => NotificationsController(),
+      fenix: true,
+    );
+    Get.lazyPut<ChatRepository>(
+      () => ChatRepository(Get.find<ApiClient>()),
       fenix: true,
     );
 

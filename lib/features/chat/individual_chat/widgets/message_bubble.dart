@@ -88,38 +88,7 @@ class MessageBubble extends StatelessWidget {
                   bottomLeft: Radius.circular(message.isOwn ? 16.r : 6.r),
                   bottomRight: Radius.circular(message.isOwn ? 6.r : 16.r),
                 ),
-                child: Image.file(
-                  File(message.imagePath!),
-                  width: 220.w,
-                  height: 180.h,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 220.w,
-                      height: 180.h,
-                      color: Colors.grey[300],
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.broken_image,
-                            size: 40.sp,
-                            color: Colors.grey[600],
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            'Image not available',
-                            style: getTextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey[600]!,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                child: _messageImage(width: 220.w, height: 180.h),
               ),
             ),
           ),
@@ -158,10 +127,7 @@ class MessageBubble extends StatelessWidget {
               maxScale: 4.0,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
-                child: Image.file(
-                  File(message.imagePath!),
-                  fit: BoxFit.contain,
-                ),
+                child: _messageImage(fit: BoxFit.contain),
               ),
             ),
             Positioned(
@@ -182,6 +148,41 @@ class MessageBubble extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _messageImage({
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    Widget errorBuilder(
+      BuildContext context,
+      Object error,
+      StackTrace? stackTrace,
+    ) => Container(
+      width: width,
+      height: height,
+      color: Colors.grey[300],
+      alignment: Alignment.center,
+      child: Icon(Icons.broken_image, size: 40.sp, color: Colors.grey[600]),
+    );
+    final path = message.imagePath!;
+    if (Uri.tryParse(path)?.hasScheme ?? false) {
+      return Image.network(
+        path,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: errorBuilder,
+      );
+    }
+    return Image.file(
+      File(path),
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: errorBuilder,
     );
   }
 
