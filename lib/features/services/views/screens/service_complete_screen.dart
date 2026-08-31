@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../home/views/screens/select_issue_screen.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/services_controller.dart';
@@ -212,12 +213,9 @@ class ServiceCompleteScreen extends StatelessWidget {
                     10.verticalSpace,
                     SrOutlineButton(
                       text: 'Download receipt',
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Receipt download has started.'),
-                            ),
-                          ),
+                      onPressed: () => AppHelperFunctions.showSuccessSnackBar(
+                        'Receipt download has started.',
+                      ),
                     ),
                     16.verticalSpace,
                     Center(

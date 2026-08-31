@@ -13,10 +13,36 @@ class TechnicianJob {
   final CustomerServiceRequest api;
   String get id => api.requestNumber;
   String get serviceName => 'Service request';
-  String get customerName => 'Customer ${api.customerId}';
-  String get phone => 'Available through customer contact';
-  String get email => 'Available through customer contact';
-  String get address => 'Saved address ${api.addressId}';
+  String get customerName {
+    final customer = api.customer;
+    if (customer == null) return 'Customer ${api.customerId}';
+    final name = '${customer.firstName} ${customer.lastName}'.trim();
+    return name.isEmpty ? 'Customer ${api.customerId}' : name;
+  }
+
+  String get phone {
+    final value = api.customer?.phone?.trim();
+    return value == null || value.isEmpty ? 'Not provided by API' : value;
+  }
+
+  String get email {
+    final value = api.customer?.email.trim();
+    return value == null || value.isEmpty ? 'Not provided by API' : value;
+  }
+
+  String get address {
+    final value = api.address;
+    if (value == null) return 'Saved address ${api.addressId}';
+    return [
+      value.line1,
+      if (value.apartment?.trim().isNotEmpty ?? false) value.apartment!.trim(),
+      value.city,
+      value.state,
+      value.zipCode,
+      value.country,
+    ].where((part) => part.trim().isNotEmpty).join(', ');
+  }
+
   String get requestedDate => api.scheduledStart == null
       ? 'Schedule pending'
       : DateFormat('EEEE, MMMM d').format(api.scheduledStart!.toLocal());

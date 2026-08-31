@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/services_controller.dart';
+import '../../data/service_request_models.dart';
 
 class ServiceRequestCard extends StatelessWidget {
   const ServiceRequestCard({
@@ -16,20 +17,21 @@ class ServiceRequestCard extends StatelessWidget {
   final ServiceRequest request;
   final VoidCallback onAction;
 
-  (String, String) get _badgeAndAction {
-    switch (request.status) {
-      case ServiceRequestStatus.quoteReady:
-        return ('QUOTE READY', 'Review quote');
-      case ServiceRequestStatus.underReview:
-        return ('UNDER REVIEW', 'View request');
-      case ServiceRequestStatus.scheduled:
-        return ('SCHEDULED', 'View appointment');
-      case ServiceRequestStatus.completed:
-        return ('COMPLETED', 'View service report');
-    }
-  }
+  String get _actionText => switch (request.api.status) {
+    CustomerRequestStatus.newRequest => 'View request',
+    CustomerRequestStatus.underReview => 'View review status',
+    CustomerRequestStatus.quoteSent => 'Review quote',
+    CustomerRequestStatus.accepted => 'Continue to payment',
+    CustomerRequestStatus.scheduled => 'View appointment',
+    CustomerRequestStatus.inProgress => 'View service progress',
+    CustomerRequestStatus.reportSubmitted => 'View report status',
+    CustomerRequestStatus.completed => 'View service report',
+    CustomerRequestStatus.cancelled => 'View request',
+  };
 
-  bool get _isSolidAction => request.status == ServiceRequestStatus.quoteReady;
+  bool get _isSolidAction =>
+      request.api.status == CustomerRequestStatus.quoteSent ||
+      request.api.status == CustomerRequestStatus.accepted;
 
   String get _metaLine {
     switch (request.status) {
@@ -59,7 +61,6 @@ class ServiceRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (_, actionText) = _badgeAndAction;
     final badgeText = request.statusLabel;
     final isCompleted = request.status == ServiceRequestStatus.completed;
 
@@ -152,7 +153,7 @@ class ServiceRequestCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
-                actionText,
+                _actionText,
                 style: getTextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../controller/technician_equipment_controller.dart';
 
 class TechnicianInletQuantitiesScreen extends StatefulWidget {
@@ -37,9 +38,7 @@ class _TechnicianInletQuantitiesScreenState
   Future<void> _save() async {
     final saved = await widget.controller.replaceInletQuantities(_draft);
     if (!saved || !mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Inlet quantities saved.')));
+    AppHelperFunctions.showSuccessSnackBar('Inlet quantities saved.');
     Navigator.pop(context);
   }
 

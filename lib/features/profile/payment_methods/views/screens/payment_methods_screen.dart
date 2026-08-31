@@ -1,5 +1,6 @@
 import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
 import 'package:aryegrunzweig/core/common/widgets/custom_app_bar.dart';
+import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
 import 'package:aryegrunzweig/features/profile/payment_methods/controllers/payment_methods_controller.dart';
 import 'package:aryegrunzweig/features/profile/payment_methods/views/widgets/add_card_button.dart';
 import 'package:aryegrunzweig/features/profile/payment_methods/views/widgets/payment_card.dart';
@@ -41,10 +42,9 @@ class PaymentMethodsScreen extends StatelessWidget {
                           // Add New Card Button
                           AddCardButton(
                             onPressed: () {
-                              Get.snackbar(
-                                'Add Card',
+                              AppHelperFunctions.showSnackBar(
                                 'Add card feature coming soon',
-                                snackPosition: SnackPosition.BOTTOM,
+                                title: 'Add Card',
                               );
                             },
                           ),
@@ -62,18 +62,14 @@ class PaymentMethodsScreen extends StatelessWidget {
                                   paymentMethod: method,
                                   onSetDefault: () {
                                     controller.setAsDefault(method.id);
-                                    Get.snackbar(
-                                      'Success',
+                                    AppHelperFunctions.showSuccessSnackBar(
                                       'Card set as default',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      duration: const Duration(seconds: 2),
                                     );
                                   },
                                   onEdit: () {
-                                    Get.snackbar(
-                                      'Edit Card',
+                                    AppHelperFunctions.showSnackBar(
                                       'Edit feature coming soon',
-                                      snackPosition: SnackPosition.BOTTOM,
+                                      title: 'Edit Card',
                                     );
                                   },
                                   onDelete: () {
@@ -126,12 +122,7 @@ class PaymentMethodsScreen extends StatelessWidget {
       onConfirm: () {
         controller.deletePaymentMethod(cardId);
         Get.back();
-        Get.snackbar(
-          'Success',
-          'Card deleted',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2),
-        );
+        AppHelperFunctions.showSuccessSnackBar('Card deleted');
       },
       onCancel: () {
         Get.back();

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../controller/technician_jobs_controller.dart';
 import '../../data/technician_models.dart';
 
@@ -124,27 +125,23 @@ class _TechnicianServiceReportScreenState
 
   Future<void> _submit() async {
     if (_workController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Describe the work performed.')),
-      );
+      AppHelperFunctions.showErrorSnackBar('Describe the work performed.');
       return;
     }
     if (_arrivalController.text.trim().isEmpty ||
         _departureController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter arrival and departure times.')),
+      AppHelperFunctions.showErrorSnackBar(
+        'Enter arrival and departure times.',
       );
       return;
     }
     if (_followUpRequired && _followUpController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Describe the required follow-up.')),
-      );
+      AppHelperFunctions.showErrorSnackBar('Describe the required follow-up.');
       return;
     }
     if (!_customerConfirmed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Customer confirmation is required.')),
+      AppHelperFunctions.showErrorSnackBar(
+        'Customer confirmation is required.',
       );
       return;
     }

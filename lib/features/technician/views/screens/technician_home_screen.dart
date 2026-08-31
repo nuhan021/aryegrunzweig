@@ -25,91 +25,102 @@ class TechnicianHomeScreen extends StatelessWidget {
           children: [
             _DashboardHeader(controller: controller),
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 28.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Obx(() {
-                      final stats = controller.homeStats.value;
-                      return Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _StatCard(
-                                  value: '${stats?.jobsToday ?? 0}',
-                                  label: 'Jobs today',
-                                  icon: Icons.work_outline_rounded,
-                                  backgroundColor: Color(0xFFEDF5FF),
-                                  accentColor: Color(0xFF174EA6),
+              child: RefreshIndicator(
+                onRefresh: controller.loadDashboard,
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 28.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(() {
+                        final stats = controller.homeStats.value;
+                        return Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCard(
+                                    value: '${stats?.jobsToday ?? 0}',
+                                    label: 'Jobs today',
+                                    icon: Icons.work_outline_rounded,
+                                    backgroundColor: Color(0xFFEDF5FF),
+                                    accentColor: Color(0xFF174EA6),
+                                  ),
                                 ),
-                              ),
-                              12.horizontalSpace,
-                              Expanded(
-                                child: _StatCard(
-                                  value: '${stats?.inProgress ?? 0}',
-                                  label: 'In progress',
-                                  icon: Icons.query_stats_rounded,
-                                  backgroundColor: const Color(0xFFFFFAE9),
-                                  accentColor: const Color(0xFFE28700),
+                                12.horizontalSpace,
+                                Expanded(
+                                  child: _StatCard(
+                                    value: '${stats?.inProgress ?? 0}',
+                                    label: 'In progress',
+                                    icon: Icons.query_stats_rounded,
+                                    backgroundColor: const Color(0xFFFFFAE9),
+                                    accentColor: const Color(0xFFE28700),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          12.verticalSpace,
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _StatCard(
-                                  value: '${stats?.completedThisMonth ?? 0}',
-                                  label: 'Completed this month',
-                                  icon: Icons.checklist_rounded,
-                                  backgroundColor: const Color(0xFFECFBF5),
-                                  accentColor: const Color(0xFF0B9E72),
+                              ],
+                            ),
+                            12.verticalSpace,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCard(
+                                    value: '${stats?.completedThisMonth ?? 0}',
+                                    label: 'Completed this month',
+                                    icon: Icons.checklist_rounded,
+                                    backgroundColor: const Color(0xFFECFBF5),
+                                    accentColor: const Color(0xFF0B9E72),
+                                  ),
                                 ),
-                              ),
-                              12.horizontalSpace,
-                              Expanded(
-                                child: _StatCard(
-                                  value: '${stats?.averageRating ?? 0}',
-                                  label: 'Avg. customer rating',
-                                  icon: Icons.star_outline_rounded,
-                                  backgroundColor: Color(0xFFEDF5FF),
-                                  accentColor: AppColors.primary,
+                                12.horizontalSpace,
+                                Expanded(
+                                  child: _StatCard(
+                                    value: '${stats?.averageRating ?? 0}',
+                                    label: 'Avg. customer rating',
+                                    icon: Icons.star_outline_rounded,
+                                    backgroundColor: Color(0xFFEDF5FF),
+                                    accentColor: AppColors.primary,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    }),
-                    28.verticalSpace,
-                    Text(
-                      "Today's Jobs",
-                      style: getTextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF172231),
-                      ),
-                    ),
-                    16.verticalSpace,
-                    Obx(() {
-                      final jobs = controller.todayJobs;
-                      if (controller.isLoading.value && jobs.isEmpty) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (jobs.isEmpty) return const Text('No jobs today.');
-                      return Column(
-                        children: [
-                          for (var index = 0; index < jobs.length; index++) ...[
-                            _dashboardJob(context, controller, jobs[index]),
-                            if (index < jobs.length - 1) 14.verticalSpace,
+                              ],
+                            ),
                           ],
-                        ],
-                      );
-                    }),
-                  ],
+                        );
+                      }),
+                      28.verticalSpace,
+                      Text(
+                        "Today's Jobs",
+                        style: getTextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF172231),
+                        ),
+                      ),
+                      16.verticalSpace,
+                      Obx(() {
+                        final jobs = controller.todayJobs;
+                        if (controller.isLoading.value && jobs.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (jobs.isEmpty) return const Text('No jobs today.');
+                        return Column(
+                          children: [
+                            for (
+                              var index = 0;
+                              index < jobs.length;
+                              index++
+                            ) ...[
+                              _dashboardJob(context, controller, jobs[index]),
+                              if (index < jobs.length - 1) 14.verticalSpace,
+                            ],
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ),
             ),

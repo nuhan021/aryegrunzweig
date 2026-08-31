@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import '../../../../core/utils/helpers/app_helper.dart';
+
 class EquipmentDetailsController extends GetxController {
   // Form field observables
   var manufacturerName = ''.obs;
@@ -91,7 +93,7 @@ class EquipmentDetailsController extends GetxController {
         photos.add(File(image.path));
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to pick image');
+      AppHelperFunctions.showErrorSnackBar('Failed to pick image');
     }
   }
 
@@ -103,7 +105,7 @@ class EquipmentDetailsController extends GetxController {
         videos.add(File(video.path));
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to pick video');
+      AppHelperFunctions.showErrorSnackBar('Failed to pick video');
     }
   }
 
@@ -134,7 +136,7 @@ class EquipmentDetailsController extends GetxController {
       if (manufacturerName.isEmpty ||
           modelNumber.isEmpty ||
           serialNumber.isEmpty) {
-        Get.snackbar('Error', 'Please fill all required fields');
+        AppHelperFunctions.showErrorSnackBar('Please fill all required fields');
         return;
       }
 
@@ -143,10 +145,12 @@ class EquipmentDetailsController extends GetxController {
       //   equipmentData
       // );
 
-      Get.snackbar('Success', 'Equipment details saved successfully');
+      AppHelperFunctions.showSuccessSnackBar(
+        'Equipment details saved successfully',
+      );
       Get.back();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save equipment details');
+      AppHelperFunctions.showErrorSnackBar('Failed to save equipment details');
     } finally {
       isLoading.value = false;
     }

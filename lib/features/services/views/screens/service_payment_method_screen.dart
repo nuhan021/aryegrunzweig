@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
+import '../../../../core/common/widgets/hosted_checkout_webview.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
 import '../../../../core/utils/constants/colors.dart';
-import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/services_controller.dart';
 import 'payment_confirmed_screen.dart';
@@ -20,31 +19,12 @@ class ServicePaymentMethodScreen extends StatefulWidget {
       _ServicePaymentMethodScreenState();
 }
 
-class _ServicePaymentMethodScreenState extends State<ServicePaymentMethodScreen>
-    with WidgetsBindingObserver {
+class _ServicePaymentMethodScreenState
+    extends State<ServicePaymentMethodScreen> {
   final ServicesController controller = Get.find<ServicesController>();
   String? paymentId;
   String status = 'Not started';
   bool checking = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && paymentId != null) {
-      _refreshStatus();
-    }
-  }
 
   Future<void> _openStripeCheckout() async {
     final authorization = await controller.authorizePayment(widget.request);
@@ -55,17 +35,21 @@ class _ServicePaymentMethodScreenState extends State<ServicePaymentMethodScreen>
       await _refreshStatus();
       return;
     }
-    final opened = await launchUrl(
-      Uri.parse(checkoutUrl),
-      mode: LaunchMode.externalApplication,
+    setState(() => status = 'Waiting for Stripe confirmation');
+    final checkoutResult = await Navigator.push<HostedCheckoutResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HostedCheckoutWebView(
+          checkoutUrl: checkoutUrl,
+          title: 'Authorize payment',
+        ),
+      ),
     );
-    if (!opened) {
-      AppHelperFunctions.showErrorSnackBar(
-        'Unable to open the secure Stripe Checkout page.',
-      );
-    } else if (mounted) {
-      setState(() => status = 'Waiting for Stripe confirmation');
+    if (!mounted) return;
+    if (checkoutResult == HostedCheckoutResult.cancelled) {
+      setState(() => status = 'Checkout cancelled');
     }
+    await _refreshStatus();
   }
 
   Future<void> _refreshStatus() async {
@@ -158,7 +142,7 @@ class _ServicePaymentMethodScreenState extends State<ServicePaymentMethodScreen>
                     ),
                     8.verticalSpace,
                     Text(
-                      'Stripe will open in your browser. Return to the app after completing or cancelling checkout.',
+                      'Stripe Checkout opens securely inside the app. Close it after completing or cancelling payment.',
                       textAlign: TextAlign.center,
                       style: getTextStyle(
                         fontSize: 13.sp,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../auth/controller/auth_controller.dart';
 import '../../data/profile_models.dart';
 import '../../data/profile_repository.dart';
@@ -42,9 +43,9 @@ class HelpSupportController extends GetxController {
         description: settings?.officePhone ?? 'Phone not available',
         icon: Icons.phone,
         iconBackgroundColor: const Color(0x1428C76F),
-        onTap: () => Get.snackbar(
-          'Office phone',
+        onTap: () => AppHelperFunctions.showSnackBar(
           settings?.officePhone ?? 'Phone not available',
+          title: 'Office phone',
         ),
       ),
       ContactOption(
@@ -53,9 +54,9 @@ class HelpSupportController extends GetxController {
         description: settings?.supportEmail ?? 'Email not available',
         icon: Icons.mail_outline,
         iconBackgroundColor: const Color(0x14FF9F43),
-        onTap: () => Get.snackbar(
-          'Support email',
+        onTap: () => AppHelperFunctions.showSnackBar(
           settings?.supportEmail ?? 'Email not available',
+          title: 'Support email',
         ),
       ),
     ]);
@@ -66,7 +67,9 @@ class HelpSupportController extends GetxController {
     final email = emailController.text.trim();
     final message = messageController.text.trim();
     if (name.isEmpty || email.isEmpty || message.isEmpty) {
-      Get.snackbar('Error', 'Name, email, and message are required.');
+      AppHelperFunctions.showErrorSnackBar(
+        'Name, email, and message are required.',
+      );
       return;
     }
     if (isSubmitting.value) return;
@@ -83,9 +86,9 @@ class HelpSupportController extends GetxController {
     isSubmitting.value = false;
     if (result.isSuccess && result.data?.success == true) {
       messageController.clear();
-      Get.snackbar('Success', 'Your message has been sent.');
+      AppHelperFunctions.showSuccessSnackBar('Your message has been sent.');
     } else {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
     }
   }
 

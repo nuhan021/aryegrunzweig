@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/shop_controller.dart';
+import '../widgets/shop_cart_button.dart';
 import '../widgets/shop_product_card.dart';
 import 'order_summary_screen.dart';
 
@@ -83,6 +84,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       ],
                     ),
                   ),
+                  const Spacer(),
+                  ShopCartButton(controller: controller),
                 ],
               ),
             ),
@@ -296,40 +299,54 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     ),
                     14.verticalSpace,
 
-                    GestureDetector(
-                      onTap: () async {
-                        if (!await controller.addToCart(
-                              product,
-                              quantity: quantity,
-                            ) ||
-                            !context.mounted) {
-                          return;
-                        }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => OrderSummaryScreen(),
+                    Obx(() {
+                      final adding = controller.isAddingProduct(product.id);
+                      return GestureDetector(
+                        onTap: adding
+                            ? null
+                            : () async {
+                                if (!await controller.addToCart(
+                                      product,
+                                      quantity: quantity,
+                                    ) ||
+                                    !context.mounted) {
+                                  return;
+                                }
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const OrderSummaryScreen(),
+                                  ),
+                                );
+                              },
+                        child: Container(
+                          height: 50.h,
+                          width: double.maxFinite,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
-                        );
-                      },
-                      child: Container(
-                        height: 50.h,
-                        width: double.maxFinite,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12.r),
+                          child: adding
+                              ? SizedBox(
+                                  width: 20.w,
+                                  height: 20.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Add to cart',
+                                  style: getTextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
-                        child: Text(
-                          'Add to cart',
-                          style: getTextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+                      );
+                    }),
                     10.verticalSpace,
 
                     GestureDetector(
@@ -456,30 +473,36 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           final relatedProduct = related[index];
                           return SizedBox(
                             width: 160.w,
-                            child: ShopProductCard(
-                              product: relatedProduct,
-                              onTap: () => Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ProductDetailsScreen(
-                                    product: relatedProduct,
-                                  ),
+                            child: Obx(
+                              () => ShopProductCard(
+                                product: relatedProduct,
+                                isAdding: controller.isAddingProduct(
+                                  relatedProduct.id,
                                 ),
-                              ),
-                              onAddToCart: () async {
-                                if (!await controller.addToCart(
-                                      relatedProduct,
-                                    ) ||
-                                    !context.mounted) {
-                                  return;
-                                }
-                                Navigator.push(
+                                onTap: () => Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => OrderSummaryScreen(),
+                                    builder: (_) => ProductDetailsScreen(
+                                      product: relatedProduct,
+                                    ),
                                   ),
-                                );
-                              },
+                                ),
+                                onAddToCart: () async {
+                                  if (!await controller.addToCart(
+                                        relatedProduct,
+                                      ) ||
+                                      !context.mounted) {
+                                    return;
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const OrderSummaryScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           );
                         },

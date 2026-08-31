@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/utils/helpers/app_helper.dart';
+
 import '../../../../auth/models/auth_models.dart';
 import '../../../data/profile_models.dart';
 import '../../controllers/saved_addresses_controller.dart';
@@ -97,7 +99,9 @@ class _AddressEditorScreenState extends State<AddressEditorScreen> {
       state.text,
       zipCode.text,
     ].any((value) => value.trim().isEmpty)) {
-      Get.snackbar('Error', 'Complete all required address fields.');
+      AppHelperFunctions.showErrorSnackBar(
+        'Complete all required address fields.',
+      );
       return;
     }
     final success = await widget.controller.saveAddress(

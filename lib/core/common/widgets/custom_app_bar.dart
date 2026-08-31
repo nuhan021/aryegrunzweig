@@ -10,11 +10,13 @@ class CustomAppBar extends StatelessWidget {
     this.isBack = true,
     required this.title,
     required this.subtitle,
+    this.action,
   });
 
   final bool isBack;
   final String title;
   final String subtitle;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -58,13 +60,21 @@ class CustomAppBar extends StatelessWidget {
           ],
 
           // title
-          Text(
-            title,
-            style: getTextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: getTextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              if (action != null) ...[12.horizontalSpace, action!],
+            ],
           ),
 
           10.verticalSpace,

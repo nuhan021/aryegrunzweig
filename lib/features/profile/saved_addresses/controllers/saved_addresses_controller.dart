@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../auth/models/auth_models.dart';
 import '../../data/profile_models.dart';
 import '../../data/profile_repository.dart';
@@ -44,7 +45,7 @@ class SavedAddressesController extends GetxController {
         : await _repository.updateAddress(existing.id, request);
     isSaving.value = false;
     if (!result.isSuccess) {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
       return false;
     }
     await loadAddresses();
@@ -55,9 +56,9 @@ class SavedAddressesController extends GetxController {
     final result = await _repository.deleteAddress(address.id);
     if (result.isSuccess && result.data?.success == true) {
       addresses.removeWhere((item) => item.id == address.id);
-      Get.snackbar('Success', 'Address deleted successfully');
+      AppHelperFunctions.showSuccessSnackBar('Address deleted successfully');
     } else {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:aryegrunzweig/features/home/views/screens/service_request_detail
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
@@ -34,7 +35,7 @@ class SelectIssueScreen extends StatelessWidget {
                   children: [
                     Obx(() {
                       if (controller.srIsLoadingCatalog.value) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const _IssueCatalogSkeleton();
                       }
                       if (controller.srErrorMessage.value.isNotEmpty) {
                         return Center(
@@ -81,14 +82,68 @@ class SelectIssueScreen extends StatelessWidget {
               padding: EdgeInsets.all(16.w),
               child: SrPrimaryButton(
                 text: 'Continue',
-                onPressed: () => AppHelperFunctions.navigateToScreen(
-                  context,
-                  ServiceRequestDetailsScreen(),
-                ),
+                onPressed: () {
+                  if (controller.srIsLoadingCatalog.value) return;
+                  if (controller.srSelectedCategoryId.value.isEmpty ||
+                      controller.srSelectedIssueId.value == null) {
+                    AppHelperFunctions.showErrorSnackBar(
+                      'Please wait for the service issues to load and select one.',
+                    );
+                    return;
+                  }
+                  AppHelperFunctions.navigateToScreen(
+                    context,
+                    ServiceRequestDetailsScreen(),
+                  );
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _IssueCatalogSkeleton extends StatelessWidget {
+  const _IssueCatalogSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeletonizer(
+      enabled: true,
+      child: Column(
+        children: [
+          Container(
+            height: 48.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+          ),
+          18.verticalSpace,
+          ...List.generate(
+            5,
+            (_) => Container(
+              height: 52.h,
+              width: double.infinity,
+              margin: EdgeInsets.only(bottom: 12.h),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Row(
+                children: [
+                  16.horizontalSpace,
+                  const Icon(Icons.radio_button_off),
+                  12.horizontalSpace,
+                  const Text('Loading service issue option'),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

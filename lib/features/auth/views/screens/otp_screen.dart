@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/constants/icon_path.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controller/auth_controller.dart';
 
@@ -82,22 +83,17 @@ class OtpScreen extends StatelessWidget {
     if (success) {
       Get.offAllNamed(AppRoute.accountCreateSuccessScreen);
     } else {
-      _message(context, controller.errorMessage.value);
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
     }
   }
 
   Future<void> _resend(BuildContext context) async {
     final success = await controller.resendVerification();
     if (!context.mounted) return;
-    _message(
-      context,
-      success ? controller.infoMessage.value : controller.errorMessage.value,
-    );
-  }
-
-  void _message(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    if (success) {
+      AppHelperFunctions.showSuccessSnackBar(controller.infoMessage.value);
+    } else {
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
+    }
   }
 }

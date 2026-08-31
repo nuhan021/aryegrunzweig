@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -8,6 +6,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/shop_controller.dart';
+import '../widgets/shop_cart_button.dart';
 import '../widgets/shop_product_card.dart';
 import 'order_summary_screen.dart';
 import 'product_details_screen.dart';
@@ -54,11 +53,12 @@ class ShopScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const CustomAppBar(
+            CustomAppBar(
               isBack: false,
               title: 'Shop Central Vacuum Products',
               subtitle:
                   'The invisible infrastructure for a healthier home. Discover our range of high-performance power units and precision cleaning kits.',
+              action: ShopCartButton(controller: controller, onPrimary: true),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -180,6 +180,7 @@ class ShopScreen extends StatelessWidget {
                           final product = controller.currentPageProducts[index];
                           return ShopProductCard(
                             product: product,
+                            isAdding: controller.isAddingProduct(product.id),
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -195,7 +196,7 @@ class ShopScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => OrderSummaryScreen(),
+                                  builder: (_) => const OrderSummaryScreen(),
                                 ),
                               );
                             },
@@ -226,113 +227,64 @@ class _Pagination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final current = controller.currentPage.value;
       final total = controller.totalPages;
-
-      return _buildRow(current, total);
+      if (total <= 1) return const SizedBox.shrink();
+      return _buildRow(controller.currentPage.value, total);
     });
   }
 
-  Row _buildRow(int current, int total) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => controller.goToPage(current - 1),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.arrow_back,
-                size: 13.sp,
-                color: current > 1 ? AppColors.primary : Colors.grey.shade400,
-              ),
-              3.horizontalSpace,
-              Text(
-                'Previous',
-                style: getTextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w500,
-                  color: current > 1 ? AppColors.primary : Colors.grey.shade400,
-                ),
-              ),
-            ],
-          ),
+  Widget _buildRow(int current, int total) {
+    final loading = controller.isLoading.value;
+    return Center(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.grey.shade200),
         ),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(min(total, 7), (i) {
-                final page = i + 1;
-                final isLast = i == 6 && total > 7;
-                return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 2.w),
-                  child: isLast
-                      ? Text(
-                          '...',
-                          style: getTextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey.shade500,
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () => controller.goToPage(page),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 6.w,
-                              vertical: 3.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: page == current
-                                  ? AppColors.primary.withValues(alpha: 0.1)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(6.r),
-                            ),
-                            child: Text(
-                              '$page',
-                              style: getTextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                                color: page == current
-                                    ? AppColors.primary
-                                    : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                );
-              }),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: current > 1 && !loading
+                  ? () => controller.goToPage(current - 1)
+                  : null,
+              icon: const Icon(Icons.chevron_left),
+              color: AppColors.primary,
             ),
-          ),
+            SizedBox(
+              width: 76.w,
+              child: loading
+                  ? Center(
+                      child: SizedBox(
+                        width: 16.w,
+                        height: 16.w,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : Text(
+                      'Page $current of $total',
+                      textAlign: TextAlign.center,
+                      style: getTextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: current < total && !loading
+                  ? () => controller.goToPage(current + 1)
+                  : null,
+              icon: const Icon(Icons.chevron_right),
+              color: AppColors.primary,
+            ),
+          ],
         ),
-        GestureDetector(
-          onTap: () => controller.goToPage(current + 1),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Next',
-                style: getTextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w500,
-                  color: current < total
-                      ? AppColors.primary
-                      : Colors.grey.shade400,
-                ),
-              ),
-              3.horizontalSpace,
-              Icon(
-                Icons.arrow_forward,
-                size: 13.sp,
-                color: current < total
-                    ? AppColors.primary
-                    : Colors.grey.shade400,
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

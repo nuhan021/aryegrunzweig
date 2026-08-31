@@ -1,5 +1,6 @@
 import 'package:aryegrunzweig/core/common/styles/global_text_style.dart';
 import 'package:aryegrunzweig/core/common/widgets/custom_app_bar.dart';
+import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
 import 'package:aryegrunzweig/features/chat/individual_chat/controllers/individual_chat_controller.dart';
 import 'package:aryegrunzweig/features/chat/individual_chat/models/chat_message_model.dart';
 import 'package:aryegrunzweig/features/chat/individual_chat/widgets/chat_input_field.dart';
@@ -268,21 +269,11 @@ class IndividualChatScreen extends StatelessWidget {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(Get.context!).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      AppHelperFunctions.showErrorSnackBar('Error: ${e.toString()}');
     }
   }
 
   void _showFilePickerMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('File picker functionality coming soon'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    AppHelperFunctions.showSnackBar('File picker functionality coming soon');
   }
 }

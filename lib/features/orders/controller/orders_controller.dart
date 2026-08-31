@@ -15,6 +15,7 @@ class ShopOrder {
   String get itemSubtitle => api.items.length > 1
       ? '${api.items.length} products'
       : api.status.wireValue.replaceAll('_', ' ');
+  String? get imageUrl => api.items.firstOrNull?.product.imageUrls.firstOrNull;
   double get price => api.total.toDouble();
   String get orderCode => api.orderNumber;
   DateTime get orderDate => api.createdAt.toLocal();
@@ -29,7 +30,19 @@ class ShopOrder {
       api.estimatedDelivery?.toLocal() ?? api.createdAt.toLocal();
   bool get isPaid =>
       api.paidAt != null ||
-      const {'AUTHORIZED', 'CAPTURED', 'SUCCEEDED'}.contains(api.paymentStatus);
+      const {
+        'PAID',
+        'AUTHORIZED',
+        'CAPTURED',
+        'SUCCEEDED',
+        'SUCCESS',
+      }.contains(api.paymentStatus?.trim().toUpperCase()) ||
+      const {
+        CommerceOrderStatus.paid,
+        CommerceOrderStatus.processing,
+        CommerceOrderStatus.shipped,
+        CommerceOrderStatus.delivered,
+      }.contains(api.status);
 }
 
 class OrdersController extends GetxController {

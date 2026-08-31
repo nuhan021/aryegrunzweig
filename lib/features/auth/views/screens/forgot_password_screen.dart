@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/common/widgets/custom_text_field.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../controller/auth_controller.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -101,9 +102,7 @@ class ForgotPasswordScreen extends StatelessWidget {
       controller.otp = '';
       Get.toNamed(AppRoute.resetPasswordScreen);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
     }
   }
 }

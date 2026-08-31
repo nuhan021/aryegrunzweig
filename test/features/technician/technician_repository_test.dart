@@ -49,7 +49,10 @@ void main() {
       );
     });
 
-    expect((await repository.jobs()).data!.single.requestNumber, 'SR-1');
+    final job = (await repository.jobs()).data!.single;
+    expect(job.requestNumber, 'SR-1');
+    expect(job.customer!.phone, '+15145550188');
+    expect(job.address!.line1, '1842 Maplewood Drive');
     final started = await repository.startJob(
       'request-1',
       note: 'Arrived on site',
@@ -187,6 +190,23 @@ const _request = {
   'scheduledStart': '2026-08-30T09:00:00.000Z',
   'scheduledEnd': '2026-08-30T10:30:00.000Z',
   'cancellationReason': null,
+  'customer': {
+    'id': 'customer-1',
+    'firstName': 'Sarah',
+    'lastName': 'Thompson',
+    'email': 'sarah@example.com',
+    'phone': '+15145550188',
+  },
+  'address': {
+    'id': 'address-1',
+    'line1': '1842 Maplewood Drive',
+    'apartment': 'Apt 4',
+    'city': 'Westmount',
+    'state': 'QC',
+    'zipCode': 'H3Z 2A4',
+    'country': 'Canada',
+    'isPrimary': false,
+  },
   'media': [],
   'quotation': null,
   'report': null,

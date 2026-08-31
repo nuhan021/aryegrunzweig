@@ -4,6 +4,7 @@ import 'package:aryegrunzweig/core/common/widgets/custom_outline_button.dart';
 import 'package:aryegrunzweig/core/common/widgets/custom_text_field.dart';
 import 'package:aryegrunzweig/core/utils/constants/colors.dart';
 import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
+import 'package:aryegrunzweig/core/utils/helpers/app_helper.dart';
 import 'package:aryegrunzweig/features/auth/controller/auth_controller.dart';
 import 'package:aryegrunzweig/features/app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import 'package:aryegrunzweig/routes/app_routes.dart';
@@ -161,9 +162,7 @@ class LoginScreen extends StatelessWidget {
     final success = await controller.login();
     if (!context.mounted) return;
     if (!success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
       return;
     }
     Get.find<AppBottomNavBarController>().resetToFirstTab();

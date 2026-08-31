@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_button.dart';
 import '../../../../core/common/widgets/custom_text_field.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controller/auth_controller.dart';
 
@@ -98,12 +99,11 @@ class ResetPasswordScreen extends StatelessWidget {
   Future<void> _reset(BuildContext context) async {
     final success = await controller.resetPassword();
     if (!context.mounted) return;
-    final message = success
-        ? controller.infoMessage.value
-        : controller.errorMessage.value;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    if (success) {
+      AppHelperFunctions.showSuccessSnackBar(controller.infoMessage.value);
+    } else {
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
+    }
     if (success) Get.offAllNamed(AppRoute.loginScreen);
   }
 }

@@ -25,6 +25,22 @@ class ServicesScreen extends StatelessWidget {
     BuildContext context,
     ServiceRequest request,
   ) async {
+    if (request.status == ServiceRequestStatus.underReview) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ServiceRequestOverviewScreen(request: request),
+        ),
+      );
+      return;
+    }
+    if (request.status == ServiceRequestStatus.quoteReady) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => QuoteDetailsScreen(request: request)),
+      );
+      return;
+    }
     final refreshed = await controller.refreshOne(request) ?? request;
     if (!context.mounted) return;
     if (refreshed.api.status == CustomerRequestStatus.accepted) {

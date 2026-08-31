@@ -7,6 +7,7 @@ import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_button.dart';
 import '../../../../core/common/widgets/custom_text_field.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controller/auth_controller.dart';
 import '../../models/auth_models.dart';
@@ -230,9 +231,7 @@ class SignUpScreen extends StatelessWidget {
     if (success) {
       Get.toNamed(AppRoute.otpScreen);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
     }
   }
 }

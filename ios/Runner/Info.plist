@@ -43,6 +43,8 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select photos and videos to attach to your service request.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>
