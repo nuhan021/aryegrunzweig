@@ -107,6 +107,7 @@ class ServiceRequestReviewScreen extends StatelessWidget {
                   text: controller.srIsSubmitting.value
                       ? 'Submitting...'
                       : 'Submit service request',
+                  isLoading: controller.srIsSubmitting.value,
                   onPressed: controller.srIsSubmitting.value
                       ? () {}
                       : () => _submit(context),

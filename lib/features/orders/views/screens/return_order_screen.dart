@@ -161,23 +161,36 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
                       ),
                     ),
                     16.verticalSpace,
-                    GestureDetector(
-                      onTap: _submitReturn,
-                      child: Container(
-                        height: 54.h,
-                        width: double.maxFinite,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Text(
-                          'Submit return request',
-                          style: getTextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    Obx(
+                      () => GestureDetector(
+                        onTap: _controller.isActionLoading.value
+                            ? null
+                            : _submitReturn,
+                        child: Container(
+                          height: 54.h,
+                          width: double.maxFinite,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
+                          child: _controller.isActionLoading.value
+                              ? SizedBox(
+                                  height: 22.w,
+                                  width: 22.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2.3,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit return request',
+                                  style: getTextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                     ),

@@ -204,29 +204,46 @@ class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
                       ),
                       20.verticalSpace,
 
-                      SrPrimaryButton(
-                        text: 'Accept quote',
-                        onPressed: agreed ? () => _acceptQuote(request) : () {},
+                      Obx(
+                        () => SrPrimaryButton(
+                          text: 'Accept quote',
+                          isLoading: controller.isActionLoading.value,
+                          isEnabled: agreed,
+                          onPressed: () => _acceptQuote(request),
+                        ),
                       ),
                       10.verticalSpace,
-                      GestureDetector(
-                        onTap: () => _rejectQuote(request),
-                        child: Container(
-                          height: 50.h,
-                          width: double.maxFinite,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.red.shade200),
-                          ),
-                          child: Text(
-                            'Reject quote',
-                            style: getTextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red.shade400,
+                      Obx(
+                        () => GestureDetector(
+                          onTap: controller.isActionLoading.value
+                              ? null
+                              : () => _rejectQuote(request),
+                          child: Container(
+                            height: 50.h,
+                            width: double.maxFinite,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.red.shade200),
                             ),
+                            child: controller.isActionLoading.value
+                                ? SizedBox(
+                                    height: 21.w,
+                                    width: 21.w,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.3,
+                                      color: Colors.red.shade400,
+                                    ),
+                                  )
+                                : Text(
+                                    'Reject quote',
+                                    style: getTextStyle(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

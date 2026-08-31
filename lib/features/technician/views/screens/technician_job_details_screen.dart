@@ -225,6 +225,7 @@ class _TechnicianJobDetailsScreenState
                                   ? 'Report submitted'
                                   : 'Mark as in progress',
                               isPrimary: true,
+                              isLoading: controller.isActionLoading.value,
                               onTap: controller.markInProgress,
                             ),
                             10.verticalSpace,
@@ -238,6 +239,7 @@ class _TechnicianJobDetailsScreenState
                             10.verticalSpace,
                             _LargeAction(
                               text: 'Add technician notes',
+                              isLoading: controller.isUpdatingNotes.value,
                               onTap: () => _addNotes(context),
                             ),
                             10.verticalSpace,
@@ -638,16 +640,18 @@ class _LargeAction extends StatelessWidget {
     required this.text,
     required this.onTap,
     this.isPrimary = false,
+    this.isLoading = false,
   });
 
   final String text;
   final VoidCallback onTap;
   final bool isPrimary;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         height: 52.h,
         width: double.maxFinite,
@@ -657,14 +661,23 @@ class _LargeAction extends StatelessWidget {
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(color: AppColors.primary),
         ),
-        child: Text(
-          text,
-          style: getTextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: isPrimary ? Colors.white : Colors.black,
-          ),
-        ),
+        child: isLoading
+            ? SizedBox(
+                height: 21.w,
+                width: 21.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.3,
+                  color: isPrimary ? Colors.white : AppColors.primary,
+                ),
+              )
+            : Text(
+                text,
+                style: getTextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isPrimary ? Colors.white : Colors.black,
+                ),
+              ),
       ),
     );
   }
