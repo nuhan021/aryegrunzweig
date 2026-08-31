@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,11 +19,15 @@ import '../../services/views/screens/service_request_overview_screen.dart';
 import '../../technician/controller/technician_jobs_controller.dart';
 import '../../technician/views/screens/technician_job_details_screen.dart';
 import '../data/notifications_repository.dart';
+import '../data/notification_stream_service.dart';
 import '../models/notification_model.dart' as app_notification;
 
 class NotificationsController extends GetxController {
   final NotificationsRepository _repository =
       Get.find<NotificationsRepository>();
+  final NotificationStreamService _streamService =
+      Get.find<NotificationStreamService>();
+  StreamSubscription<Map<String, dynamic>>? _streamSubscription;
   final notifications = <app_notification.Notification>[].obs;
   final selectedTabIndex = 0.obs;
   final isLoading = false.obs;
@@ -32,6 +38,27 @@ class NotificationsController extends GetxController {
   void onInit() {
     super.onInit();
     loadNotifications();
+    _streamSubscription = _streamService.connect().listen(_handleStreamEvent);
+  }
+
+  void _handleStreamEvent(Map<String, dynamic> event) {
+    final payload = event['notification'] is Map
+        ? Map<String, dynamic>.from(event['notification'] as Map)
+        : event;
+    if (!payload.containsKey('id') || !payload.containsKey('createdAt')) return;
+    try {
+      final notification = app_notification.Notification.fromJson(payload);
+      final index = notifications.indexWhere(
+        (item) => item.id == notification.id,
+      );
+      if (index >= 0) {
+        notifications[index] = notification;
+      } else {
+        notifications.insert(0, notification);
+      }
+    } on FormatException {
+      // Ignore non-notification SSE events such as connection heartbeats.
+    }
   }
 
   Future<void> loadNotifications() async {
@@ -167,4 +194,10 @@ class NotificationsController extends GetxController {
 
   int get unreadCount => unreadNotifications.length;
   int get totalCount => allNotifications.length;
+
+  @override
+  void onClose() {
+    _streamSubscription?.cancel();
+    super.onClose();
+  }
 }

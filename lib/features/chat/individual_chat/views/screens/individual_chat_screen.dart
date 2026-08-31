@@ -35,6 +35,30 @@ class IndividualChatScreen extends StatelessWidget {
                 // Messages list
                 Expanded(
                   child: Obx(() {
+                    if (ctrl.isLoading.value && ctrl.messages.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (ctrl.errorMessage.value.isNotEmpty &&
+                        ctrl.messages.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              child: Text(
+                                ctrl.errorMessage.value,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: ctrl.loadMessages,
+                              child: const Text('Try again'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
                     if (ctrl.messages.isEmpty) {
                       return Center(
                         child: Text(
