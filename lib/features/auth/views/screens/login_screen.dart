@@ -139,6 +139,7 @@ class LoginScreen extends StatelessWidget {
                   text: controller.isSubmitting.value
                       ? 'Logging in...'
                       : 'Login',
+                  isLoading: controller.isSubmitting.value,
                   onPressed: () => _login(context),
                 ),
               ),

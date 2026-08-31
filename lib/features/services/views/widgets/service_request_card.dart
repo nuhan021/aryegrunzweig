@@ -12,10 +12,12 @@ class ServiceRequestCard extends StatelessWidget {
     super.key,
     required this.request,
     required this.onAction,
+    this.isLoading = false,
   });
 
   final ServiceRequest request;
   final VoidCallback onAction;
+  final bool isLoading;
 
   String get _actionText => switch (request.api.status) {
     CustomerRequestStatus.newRequest => 'View request',
@@ -141,7 +143,7 @@ class ServiceRequestCard extends StatelessWidget {
           ),
           14.verticalSpace,
           GestureDetector(
-            onTap: onAction,
+            onTap: isLoading ? null : onAction,
             child: Container(
               height: 46.h,
               width: double.maxFinite,
@@ -152,14 +154,27 @@ class ServiceRequestCard extends StatelessWidget {
                     : AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10.r),
               ),
-              child: Text(
-                _actionText,
-                style: getTextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _isSolidAction ? Colors.white : AppColors.primary,
-                ),
-              ),
+              child: isLoading
+                  ? SizedBox(
+                      height: 20.w,
+                      width: 20.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: _isSolidAction
+                            ? Colors.white
+                            : AppColors.primary,
+                      ),
+                    )
+                  : Text(
+                      _actionText,
+                      style: getTextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: _isSolidAction
+                            ? Colors.white
+                            : AppColors.primary,
+                      ),
+                    ),
             ),
           ),
         ],

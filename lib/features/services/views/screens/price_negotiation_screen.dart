@@ -124,9 +124,12 @@ class _PriceNegotiationScreenState extends State<PriceNegotiationScreen> {
             ),
             Padding(
               padding: EdgeInsets.all(16.w),
-              child: SrPrimaryButton(
-                text: 'Send Request',
-                onPressed: _sendRequest,
+              child: Obx(
+                () => SrPrimaryButton(
+                  text: 'Send Request',
+                  isLoading: controller.isActionLoading.value,
+                  onPressed: _sendRequest,
+                ),
               ),
             ),
           ],

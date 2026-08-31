@@ -248,30 +248,43 @@ class OrderDeliveredScreen extends StatelessWidget {
                 ),
               if (order.api.canReturn) 12.verticalSpace,
 
-              GestureDetector(
-                onTap: () async {
-                  final added = await Get.find<OrdersController>().reorder(
-                    order,
-                  );
-                  if (added) {
-                    Get.find<AppBottomNavBarController>().jumpToScreen(2);
-                  }
-                },
-                child: Container(
-                  height: 50.h,
-                  width: double.maxFinite,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    'Reorder items',
-                    style: getTextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+              Obx(
+                () => GestureDetector(
+                  onTap: Get.find<OrdersController>().isActionLoading.value
+                      ? null
+                      : () async {
+                          final added = await Get.find<OrdersController>()
+                              .reorder(order);
+                          if (added) {
+                            Get.find<AppBottomNavBarController>().jumpToScreen(
+                              2,
+                            );
+                          }
+                        },
+                  child: Container(
+                    height: 50.h,
+                    width: double.maxFinite,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
+                    child: Get.find<OrdersController>().isActionLoading.value
+                        ? SizedBox(
+                            height: 21.w,
+                            width: 21.w,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                            ),
+                          )
+                        : Text(
+                            'Reorder items',
+                            style: getTextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
                   ),
                 ),
               ),
