@@ -197,11 +197,12 @@ class ServiceCompleteScreen extends StatelessWidget {
                     24.verticalSpace,
 
                     if (request.api.report?.customerConfirmedAt == null)
-                      SrPrimaryButton(
-                        text: 'Confirm completed service report',
-                        onPressed: () async {
-                          await controller.confirmReport(request);
-                        },
+                      Obx(
+                        () => SrPrimaryButton(
+                          text: 'Confirm completed service report',
+                          isLoading: controller.isActionLoading.value,
+                          onPressed: () => controller.confirmReport(request),
+                        ),
                       ),
                     if (request.api.report?.customerConfirmedAt == null)
                       10.verticalSpace,
