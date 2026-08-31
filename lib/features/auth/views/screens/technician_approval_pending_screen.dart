@@ -63,13 +63,22 @@ class TechnicianApprovalPendingScreen extends StatelessWidget {
                   text: controller.isSubmitting.value
                       ? 'Checking...'
                       : 'Check approval status',
+                  isLoading: controller.isSubmitting.value,
                   onPressed: () => _refresh(context),
                 ),
               ),
               12.verticalSpace,
-              TextButton(
-                onPressed: () => _logout(),
-                child: const Text('Logout'),
+              Obx(
+                () => TextButton(
+                  onPressed: controller.isSubmitting.value ? null : _logout,
+                  child: controller.isSubmitting.value
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Logout'),
+                ),
               ),
             ],
           ),

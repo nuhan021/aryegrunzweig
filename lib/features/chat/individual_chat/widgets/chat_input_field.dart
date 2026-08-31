@@ -6,12 +6,14 @@ class ChatInputField extends StatefulWidget {
   final TextEditingController controller;
   final Function(String) onSend;
   final VoidCallback? onAttachmentTap;
+  final bool isSending;
 
   const ChatInputField({
     super.key,
     required this.controller,
     required this.onSend,
     this.onAttachmentTap,
+    this.isSending = false,
   });
 
   @override
@@ -52,7 +54,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
         children: [
           // Attachment button
           GestureDetector(
-            onTap: widget.onAttachmentTap,
+            onTap: widget.isSending ? null : widget.onAttachmentTap,
             child: Container(
               decoration: ShapeDecoration(
                 color: const Color(0xFFF3F4F6),
@@ -80,6 +82,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
                 ),
               ),
               child: TextField(
+                enabled: !widget.isSending,
                 controller: widget.controller,
                 focusNode: _focusNode,
                 maxLines: null,
@@ -107,9 +110,11 @@ class _ChatInputFieldState extends State<ChatInputField> {
           SizedBox(width: 12.w),
           // Send button
           GestureDetector(
-            onTap: () {
-              widget.onSend(widget.controller.text);
-            },
+            onTap: widget.isSending
+                ? null
+                : () {
+                    widget.onSend(widget.controller.text);
+                  },
             child: Container(
               width: 44.w,
               height: 44.w,
@@ -119,11 +124,16 @@ class _ChatInputFieldState extends State<ChatInputField> {
                   borderRadius: BorderRadius.circular(100.r),
                 ),
               ),
-              child: Icon(
-                Icons.send,
-                size: 20.sp,
-                color: const Color(0xFF697282),
-              ),
+              child: widget.isSending
+                  ? Padding(
+                      padding: EdgeInsets.all(12.w),
+                      child: const CircularProgressIndicator(strokeWidth: 2.2),
+                    )
+                  : Icon(
+                      Icons.send,
+                      size: 20.sp,
+                      color: const Color(0xFF697282),
+                    ),
             ),
           ),
         ],
