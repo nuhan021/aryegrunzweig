@@ -102,14 +102,23 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(11.r),
                   ),
-                  child: Text(
-                    _uploading ? 'Uploading...' : 'Upload Photos',
-                    style: getTextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _uploading
+                      ? SizedBox(
+                          height: 22.w,
+                          width: 22.w,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2.3,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          'Upload Photos',
+                          style: getTextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ),

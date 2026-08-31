@@ -86,6 +86,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                 text: controller.isSubmitting.value
                     ? 'Requesting...'
                     : 'Request Code',
+                isLoading: controller.isSubmitting.value,
                 onPressed: () => _requestCode(context),
               ),
             ),

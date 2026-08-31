@@ -128,28 +128,37 @@ class OrdersController extends GetxController {
   Future<bool> cancelOrder(ShopOrder order) async {
     if (!order.api.canCancel || isActionLoading.value) return false;
     isActionLoading.value = true;
-    final result = await _repository.cancelOrder(order.id);
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    try {
+      final result = await _repository.cancelOrder(order.id);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      await loadAll();
+      AppHelperFunctions.showSuccessSnackBar('Order cancelled.');
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    await loadAll();
-    AppHelperFunctions.showSuccessSnackBar('Order cancelled.');
-    return true;
   }
 
   Future<bool> reorder(ShopOrder order) async {
-    final result = await _repository.reorder(order.id);
-    if (!result.isSuccess) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    if (isActionLoading.value) return false;
+    isActionLoading.value = true;
+    try {
+      final result = await _repository.reorder(order.id);
+      if (!result.isSuccess) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      if (Get.isRegistered<ShopController>()) {
+        await Get.find<ShopController>().loadCart();
+      }
+      AppHelperFunctions.showSuccessSnackBar('Items added to your cart.');
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    if (Get.isRegistered<ShopController>()) {
-      await Get.find<ShopController>().loadCart();
-    }
-    AppHelperFunctions.showSuccessSnackBar('Items added to your cart.');
-    return true;
   }
 
   Future<bool> requestReturn({
@@ -160,18 +169,21 @@ class OrdersController extends GetxController {
   }) async {
     if (!order.api.canReturn || isActionLoading.value) return false;
     isActionLoading.value = true;
-    final result = await _repository.requestReturn(
-      orderId: order.id,
-      orderItemId: orderItemId,
-      reason: reason,
-      comments: comments,
-    );
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    try {
+      final result = await _repository.requestReturn(
+        orderId: order.id,
+        orderItemId: orderItemId,
+        reason: reason,
+        comments: comments,
+      );
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      returns.insert(0, result.data!);
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    returns.insert(0, result.data!);
-    return true;
   }
 }
