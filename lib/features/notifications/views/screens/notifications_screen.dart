@@ -22,9 +22,12 @@ class NotificationsScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            NotificationHeader(
-              onBackPressed: onBackPressed ?? Get.back,
-              onMarkAllRead: controller.markAllAsRead,
+            Obx(
+              () => NotificationHeader(
+                onBackPressed: onBackPressed ?? Get.back,
+                onMarkAllRead: controller.markAllAsRead,
+                isLoading: controller.isMarkingAllRead.value,
+              ),
             ),
             Obx(
               () => NotificationTabBar(
@@ -87,6 +90,9 @@ class NotificationsScreen extends StatelessWidget {
                             final notification = items[index];
                             return NotificationCard(
                               notification: notification,
+                              isLoading:
+                                  controller.openingNotificationId.value ==
+                                  notification.id,
                               onTap: () => controller.openNotification(
                                 context,
                                 notification,

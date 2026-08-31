@@ -41,7 +41,10 @@ class ServicesScreen extends StatelessWidget {
       );
       return;
     }
+    if (controller.openingRequestIds.contains(request.api.id)) return;
+    controller.openingRequestIds.add(request.api.id);
     final refreshed = await controller.refreshOne(request) ?? request;
+    controller.openingRequestIds.remove(request.api.id);
     if (!context.mounted) return;
     if (refreshed.api.status == CustomerRequestStatus.accepted) {
       Navigator.push(
@@ -198,6 +201,8 @@ class ServicesScreen extends StatelessWidget {
                               .map(
                                 (request) => ServiceRequestCard(
                                   request: request,
+                                  isLoading: controller.openingRequestIds
+                                      .contains(request.api.id),
                                   onAction: () =>
                                       _openRequest(context, request),
                                 ),

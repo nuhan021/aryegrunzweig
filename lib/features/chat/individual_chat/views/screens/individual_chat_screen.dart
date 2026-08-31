@@ -98,14 +98,15 @@ class IndividualChatScreen extends StatelessWidget {
                 ),
 
                 // Input field
-                ChatInputField(
-                  controller: ctrl.messageController,
-                  onSend: (message) {
-                    ctrl.sendMessage(message);
-                  },
-                  onAttachmentTap: () {
-                    _showAttachmentOptions(context, ctrl);
-                  },
+                Obx(
+                  () => ChatInputField(
+                    controller: ctrl.messageController,
+                    isSending: ctrl.isSending.value,
+                    onSend: ctrl.sendMessage,
+                    onAttachmentTap: () {
+                      _showAttachmentOptions(context, ctrl);
+                    },
+                  ),
                 ),
               ],
             ),
