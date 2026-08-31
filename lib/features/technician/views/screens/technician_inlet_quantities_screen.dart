@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
@@ -78,10 +79,13 @@ class _TechnicianInletQuantitiesScreenState
                       ),
                     ),
                     28.verticalSpace,
-                    _QuantityAction(
-                      label: 'Save quantities',
-                      primary: true,
-                      onTap: _save,
+                    Obx(
+                      () => _QuantityAction(
+                        label: 'Save quantities',
+                        primary: true,
+                        isLoading: widget.controller.isSaving.value,
+                        onTap: _save,
+                      ),
                     ),
                     12.verticalSpace,
                     _QuantityAction(
@@ -292,16 +296,18 @@ class _QuantityAction extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.primary = false,
+    this.isLoading = false,
   });
 
   final String label;
   final VoidCallback onTap;
   final bool primary;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         height: 54.h,
         width: double.maxFinite,
@@ -311,14 +317,23 @@ class _QuantityAction extends StatelessWidget {
           borderRadius: BorderRadius.circular(11.r),
           border: Border.all(color: AppColors.primary),
         ),
-        child: Text(
-          label,
-          style: getTextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: primary ? Colors.white : Colors.black,
-          ),
-        ),
+        child: isLoading
+            ? SizedBox(
+                height: 22.w,
+                width: 22.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.3,
+                  color: primary ? Colors.white : AppColors.primary,
+                ),
+              )
+            : Text(
+                label,
+                style: getTextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: primary ? Colors.white : Colors.black,
+                ),
+              ),
       ),
     );
   }

@@ -32,6 +32,8 @@ class NotificationsController extends GetxController {
   final selectedTabIndex = 0.obs;
   final isLoading = false.obs;
   final isActionLoading = false.obs;
+  final isMarkingAllRead = false.obs;
+  final openingNotificationId = RxnString();
   final errorMessage = ''.obs;
 
   @override
@@ -97,19 +99,26 @@ class NotificationsController extends GetxController {
   Future<bool> markAllAsRead() async {
     if (unreadCount == 0 || isActionLoading.value) return true;
     isActionLoading.value = true;
-    final result = await _repository.markAllAsRead();
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data != true) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    isMarkingAllRead.value = true;
+    try {
+      final result = await _repository.markAllAsRead();
+      if (!result.isSuccess || result.data != true) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      final now = DateTime.now().toUtc();
+      for (final notification in notifications) {
+        notification.readAt ??= now;
+      }
+      notifications.refresh();
+      AppHelperFunctions.showSuccessSnackBar(
+        'All notifications marked as read.',
+      );
+      return true;
+    } finally {
+      isMarkingAllRead.value = false;
+      isActionLoading.value = false;
     }
-    final now = DateTime.now().toUtc();
-    for (final notification in notifications) {
-      notification.readAt ??= now;
-    }
-    notifications.refresh();
-    AppHelperFunctions.showSuccessSnackBar('All notifications marked as read.');
-    return true;
   }
 
   Future<void> openNotification(
@@ -118,28 +127,30 @@ class NotificationsController extends GetxController {
   ) async {
     if (isActionLoading.value) return;
     isActionLoading.value = true;
-    await markAsRead(notification);
-    if (!context.mounted) {
+    openingNotificationId.value = notification.id;
+    try {
+      await markAsRead(notification);
+      if (!context.mounted) return;
+      switch (notification.targetType) {
+        case app_notification.NotificationTargetType.serviceRequest:
+          await _openServiceRequest(context, notification.serviceRequestId!);
+          break;
+        case app_notification.NotificationTargetType.order:
+          await _openOrder(context, notification.orderId!);
+          break;
+        case app_notification.NotificationTargetType.conversation:
+          Get.toNamed(
+            AppRoute.individualChatScreen,
+            arguments: {'conversationId': notification.conversationId},
+          );
+          break;
+        case app_notification.NotificationTargetType.none:
+          break;
+      }
+    } finally {
+      openingNotificationId.value = null;
       isActionLoading.value = false;
-      return;
     }
-    switch (notification.targetType) {
-      case app_notification.NotificationTargetType.serviceRequest:
-        await _openServiceRequest(context, notification.serviceRequestId!);
-        break;
-      case app_notification.NotificationTargetType.order:
-        await _openOrder(context, notification.orderId!);
-        break;
-      case app_notification.NotificationTargetType.conversation:
-        Get.toNamed(
-          AppRoute.individualChatScreen,
-          arguments: {'conversationId': notification.conversationId},
-        );
-        break;
-      case app_notification.NotificationTargetType.none:
-        break;
-    }
-    isActionLoading.value = false;
   }
 
   Future<void> _openServiceRequest(BuildContext context, String id) async {

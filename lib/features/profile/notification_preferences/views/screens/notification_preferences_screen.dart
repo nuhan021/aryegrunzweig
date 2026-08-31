@@ -51,6 +51,7 @@ class NotificationPreferencesScreen extends StatelessWidget {
                             text: controller.isSaving.value
                                 ? 'Saving...'
                                 : 'Save preferences',
+                            isLoading: controller.isSaving.value,
                             onPressed: controller.save,
                           ),
                         ],

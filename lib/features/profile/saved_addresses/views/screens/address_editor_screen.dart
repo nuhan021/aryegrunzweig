@@ -71,9 +71,16 @@ class _AddressEditorScreenState extends State<AddressEditorScreen> {
           Obx(
             () => FilledButton(
               onPressed: widget.controller.isSaving.value ? null : _save,
-              child: Text(
-                widget.controller.isSaving.value ? 'Saving...' : 'Save Address',
-              ),
+              child: widget.controller.isSaving.value
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Save Address'),
             ),
           ),
         ],
