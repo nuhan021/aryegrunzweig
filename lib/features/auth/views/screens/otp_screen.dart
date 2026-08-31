@@ -60,14 +60,25 @@ class OtpScreen extends StatelessWidget {
               onSubmit: (code) => controller.otp = code,
             ),
             20.verticalSpace,
-            TextButton(
-              onPressed: () => _resend(context),
-              child: const Text('Resend code'),
+            Obx(
+              () => TextButton(
+                onPressed: controller.isSubmitting.value
+                    ? null
+                    : () => _resend(context),
+                child: controller.isSubmitting.value
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Resend code'),
+              ),
             ),
             20.verticalSpace,
             Obx(
               () => CustomButton(
                 text: controller.isSubmitting.value ? 'Verifying...' : 'Verify',
+                isLoading: controller.isSubmitting.value,
                 onPressed: () => _verify(context),
               ),
             ),

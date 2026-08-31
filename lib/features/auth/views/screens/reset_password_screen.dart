@@ -87,6 +87,7 @@ class ResetPasswordScreen extends StatelessWidget {
                 text: controller.isSubmitting.value
                     ? 'Resetting...'
                     : 'Reset Password',
+                isLoading: controller.isSubmitting.value,
                 onPressed: () => _reset(context),
               ),
             ),

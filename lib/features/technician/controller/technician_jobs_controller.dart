@@ -80,6 +80,7 @@ class TechnicianJobsController extends GetxController {
   final currentReport = Rxn<TechnicianReport>();
   final isLoading = false.obs;
   final isActionLoading = false.obs;
+  final isUpdatingNotes = false.obs;
   final errorMessage = ''.obs;
 
   TechnicianJob get job => selectedJob.value!;
@@ -193,20 +194,23 @@ class TechnicianJobsController extends GetxController {
       return;
     }
     isActionLoading.value = true;
-    final result = await _repository.startJob(
-      selected.api.id,
-      note: 'Technician started the assigned visit.',
-    );
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return;
+    try {
+      final result = await _repository.startJob(
+        selected.api.id,
+        note: 'Technician started the assigned visit.',
+      );
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return;
+      }
+      final updated = TechnicianJob(api: result.data!);
+      final index = jobs.indexWhere((item) => item.api.id == updated.api.id);
+      if (index >= 0) jobs[index] = updated;
+      selectJob(updated);
+      AppHelperFunctions.showSuccessSnackBar('Job marked in progress.');
+    } finally {
+      isActionLoading.value = false;
     }
-    final updated = TechnicianJob(api: result.data!);
-    final index = jobs.indexWhere((item) => item.api.id == updated.api.id);
-    if (index >= 0) jobs[index] = updated;
-    selectJob(updated);
-    AppHelperFunctions.showSuccessSnackBar('Job marked in progress.');
   }
 
   Future<void> loadNote() async {
@@ -229,17 +233,22 @@ class TechnicianJobsController extends GetxController {
   Future<bool> updateNotes(String notes) async {
     final selected = selectedJob.value;
     final text = notes.trim();
-    if (selected == null || text.isEmpty) return false;
-    final result = currentNote.value == null
-        ? await _repository.createNote(selected.api.id, text)
-        : await _repository.updateNote(selected.api.id, text);
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    if (selected == null || text.isEmpty || isUpdatingNotes.value) return false;
+    isUpdatingNotes.value = true;
+    try {
+      final result = currentNote.value == null
+          ? await _repository.createNote(selected.api.id, text)
+          : await _repository.updateNote(selected.api.id, text);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      currentNote.value = result.data;
+      technicianNotes.value = result.data!.text;
+      return true;
+    } finally {
+      isUpdatingNotes.value = false;
     }
-    currentNote.value = result.data;
-    technicianNotes.value = result.data!.text;
-    return true;
   }
 
   Future<bool> uploadMedia(String kind, String path) async {
@@ -261,21 +270,24 @@ class TechnicianJobsController extends GetxController {
     final selected = selectedJob.value;
     if (selected == null || isActionLoading.value) return false;
     isActionLoading.value = true;
-    final result = currentReport.value == null
-        ? await _repository.createReport(selected.api.id, payload)
-        : await _repository.updateReport(selected.api.id, payload);
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    try {
+      final result = currentReport.value == null
+          ? await _repository.createReport(selected.api.id, payload)
+          : await _repository.updateReport(selected.api.id, payload);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      currentReport.value = result.data;
+      await refreshSelected();
+      await loadDashboard();
+      AppHelperFunctions.showSuccessSnackBar(
+        'Report submitted for office review.',
+      );
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    currentReport.value = result.data;
-    await refreshSelected();
-    await loadDashboard();
-    AppHelperFunctions.showSuccessSnackBar(
-      'Report submitted for office review.',
-    );
-    return true;
   }
 
   // Completion is performed by office approval; technician report submission

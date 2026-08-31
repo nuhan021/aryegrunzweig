@@ -150,8 +150,12 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   GestureDetector(
-                                    onTap: () =>
-                                        controller.removeFromCart(line),
+                                    onTap:
+                                        controller.isRemovingCartProduct(
+                                          line.api.productId,
+                                        )
+                                        ? null
+                                        : () => controller.removeFromCart(line),
                                     child: Container(
                                       height: 22.w,
                                       width: 22.w,
@@ -160,11 +164,23 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                                         color: Colors.grey.shade100,
                                       ),
                                       alignment: Alignment.center,
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 13.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                      child:
+                                          controller.isRemovingCartProduct(
+                                            line.api.productId,
+                                          )
+                                          ? SizedBox(
+                                              height: 13.w,
+                                              width: 13.w,
+                                              child:
+                                                  const CircularProgressIndicator(
+                                                    strokeWidth: 1.8,
+                                                  ),
+                                            )
+                                          : Icon(
+                                              Icons.close,
+                                              size: 13.sp,
+                                              color: Colors.grey.shade600,
+                                            ),
                                     ),
                                   ),
                                   20.verticalSpace,
@@ -230,12 +246,19 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                                 ),
                               )
                               .toList(growable: false),
-                          onChanged: (id) {
-                            if (id != null) {
-                              controller.selectShippingAddress(id);
-                            }
-                          },
+                          onChanged: controller.isPreviewLoading.value
+                              ? null
+                              : (id) {
+                                  if (id != null) {
+                                    controller.selectShippingAddress(id);
+                                  }
+                                },
                         ),
+
+                      if (controller.isPreviewLoading.value) ...[
+                        8.verticalSpace,
+                        const LinearProgressIndicator(minHeight: 2),
+                      ],
 
                       10.verticalSpace,
                       Text(
@@ -289,6 +312,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         text: controller.isCheckoutLoading.value
                             ? 'Opening Stripe...'
                             : 'Continue to secure payment',
+                        isLoading: controller.isCheckoutLoading.value,
                         onPressed: controller.isCheckoutLoading.value
                             ? () {}
                             : _placeOrder,
@@ -296,11 +320,15 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                       if (controller.checkoutSession.value != null)
                         TextButton(
                           onPressed: checkingPayment ? null : _refreshPayment,
-                          child: Text(
-                            checkingPayment
-                                ? 'Checking payment...'
-                                : 'Refresh payment status',
-                          ),
+                          child: checkingPayment
+                              ? const SizedBox(
+                                  height: 19,
+                                  width: 19,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.1,
+                                  ),
+                                )
+                              : const Text('Refresh payment status'),
                         ),
                       10.verticalSpace,
                       Text(

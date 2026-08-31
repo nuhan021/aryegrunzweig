@@ -6,11 +6,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class NotificationHeader extends StatelessWidget {
   final VoidCallback onBackPressed;
   final VoidCallback onMarkAllRead;
+  final bool isLoading;
 
   const NotificationHeader({
     super.key,
     required this.onBackPressed,
     required this.onMarkAllRead,
+    this.isLoading = false,
   });
 
   @override
@@ -66,15 +68,24 @@ class NotificationHeader extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: onMarkAllRead,
-                  child: Text(
-                    'Mark all read',
-                    style: getTextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                    ),
-                  ),
+                  onTap: isLoading ? null : onMarkAllRead,
+                  child: isLoading
+                      ? SizedBox(
+                          height: 18.w,
+                          width: 18.w,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          'Mark all read',
+                          style: getTextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ],
             ),
