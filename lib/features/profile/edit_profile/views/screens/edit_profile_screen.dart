@@ -69,6 +69,7 @@ class EditProfileScreen extends StatelessWidget {
                   text: controller.isLoading.value
                       ? 'Saving...'
                       : 'Save Changes',
+                  isLoading: controller.isLoading.value,
                   onPressed: controller.isLoading.value
                       ? () {}
                       : controller.saveChanges,

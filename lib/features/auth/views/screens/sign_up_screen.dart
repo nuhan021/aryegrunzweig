@@ -209,6 +209,7 @@ class SignUpScreen extends StatelessWidget {
                 text: controller.isSubmitting.value
                     ? 'Creating account...'
                     : 'Create Account',
+                isLoading: controller.isSubmitting.value,
                 onPressed: () => _submit(context),
               ),
             ),

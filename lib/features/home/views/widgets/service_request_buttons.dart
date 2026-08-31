@@ -9,31 +9,47 @@ class SrPrimaryButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
+    this.isLoading = false,
+    this.isEnabled = true,
   });
 
   final String text;
   final VoidCallback onPressed;
+  final bool isLoading;
+  final bool isEnabled;
 
   @override
   Widget build(BuildContext context) {
+    final canPress = isEnabled && !isLoading;
     return GestureDetector(
-      onTap: onPressed,
+      onTap: canPress ? onPressed : null,
       child: Container(
         height: 50.h,
         width: double.maxFinite,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          color: canPress
+              ? AppColors.primary
+              : AppColors.primary.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Text(
-          text,
-          style: getTextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+        child: isLoading
+            ? SizedBox(
+                height: 21.w,
+                width: 21.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.3,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                text,
+                style: getTextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -44,15 +60,20 @@ class SrOutlineButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
+    this.isLoading = false,
+    this.isEnabled = true,
   });
 
   final String text;
   final VoidCallback onPressed;
+  final bool isLoading;
+  final bool isEnabled;
 
   @override
   Widget build(BuildContext context) {
+    final canPress = isEnabled && !isLoading;
     return GestureDetector(
-      onTap: onPressed,
+      onTap: canPress ? onPressed : null,
       child: Container(
         height: 50.h,
         width: double.maxFinite,
@@ -62,14 +83,23 @@ class SrOutlineButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey.shade300),
         ),
-        child: Text(
-          text,
-          style: getTextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
+        child: isLoading
+            ? SizedBox(
+                height: 21.w,
+                width: 21.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.3,
+                  color: AppColors.primary,
+                ),
+              )
+            : Text(
+                text,
+                style: getTextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
       ),
     );
   }

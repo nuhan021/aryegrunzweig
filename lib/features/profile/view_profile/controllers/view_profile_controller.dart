@@ -11,6 +11,7 @@ class ViewProfileController extends GetxController {
   final profile = Rxn<UserProfileResponse>();
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final isLoggingOut = false.obs;
 
   String get userName {
     final value = profile.value;
@@ -65,7 +66,13 @@ class ViewProfileController extends GetxController {
   }
 
   Future<void> handleLogout() async {
-    await Get.find<AuthController>().logout();
-    Get.offAllNamed(AppRoute.loginScreen);
+    if (isLoggingOut.value) return;
+    isLoggingOut.value = true;
+    try {
+      await Get.find<AuthController>().logout();
+      Get.offAllNamed(AppRoute.loginScreen);
+    } finally {
+      isLoggingOut.value = false;
+    }
   }
 }

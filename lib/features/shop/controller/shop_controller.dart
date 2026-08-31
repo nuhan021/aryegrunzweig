@@ -76,8 +76,10 @@ class ShopController extends GetxController {
   final isLoading = false.obs;
   final isCartLoading = false.obs;
   final isCheckoutLoading = false.obs;
+  final isPreviewLoading = false.obs;
   final addingProductIds = <String>{}.obs;
   final updatingCartProductIds = <String>{}.obs;
+  final removingCartProductIds = <String>{}.obs;
   final errorMessage = ''.obs;
   final preview = Rxn<CheckoutPreview>();
   final checkoutSession = Rxn<CheckoutSession>();
@@ -85,6 +87,7 @@ class ShopController extends GetxController {
   String? _checkoutIdempotencyKey;
   final _quantitySyncing = <String>{};
   final _confirmedQuantities = <String, int>{};
+  int _previewRequestCount = 0;
 
   int get totalPages =>
       totalItems.value == 0 ? 1 : (totalItems.value / itemsPerPage).ceil();
@@ -94,6 +97,8 @@ class ShopController extends GetxController {
       addingProductIds.contains(productId);
   bool isUpdatingCartProduct(String productId) =>
       updatingCartProductIds.contains(productId);
+  bool isRemovingCartProduct(String productId) =>
+      removingCartProductIds.contains(productId);
   String? cartProductImage(CartLine line) {
     final cartImage = line.product.imageUrl;
     if (cartImage != null && cartImage.trim().isNotEmpty) return cartImage;
@@ -284,16 +289,23 @@ class ShopController extends GetxController {
   }
 
   Future<void> removeFromCart(CartLine line) async {
-    final result = await _repository.removeCartItem(line.api.productId);
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return;
-    }
-    _setCart(result.data!);
-    if (cart.isNotEmpty) {
-      await loadPreview();
-    } else {
-      preview.value = null;
+    final productId = line.api.productId;
+    if (isRemovingCartProduct(productId)) return;
+    removingCartProductIds.add(productId);
+    try {
+      final result = await _repository.removeCartItem(productId);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return;
+      }
+      _setCart(result.data!);
+      if (cart.isNotEmpty) {
+        await loadPreview();
+      } else {
+        preview.value = null;
+      }
+    } finally {
+      removingCartProductIds.remove(productId);
     }
   }
 
@@ -331,13 +343,20 @@ class ShopController extends GetxController {
   Future<bool> loadPreview() async {
     final addressId = selectedShippingAddressId.value;
     if (addressId == null || cart.isEmpty) return false;
-    final result = await _repository.preview(shippingAddressId: addressId);
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    _previewRequestCount++;
+    isPreviewLoading.value = true;
+    try {
+      final result = await _repository.preview(shippingAddressId: addressId);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      preview.value = result.data;
+      return true;
+    } finally {
+      _previewRequestCount--;
+      isPreviewLoading.value = _previewRequestCount > 0;
     }
-    preview.value = result.data;
-    return true;
   }
 
   Future<CheckoutSession?> placeOrder() async {
@@ -353,24 +372,27 @@ class ShopController extends GetxController {
       AppHelperFunctions.showErrorSnackBar('Your cart is empty.');
       return null;
     }
-    if (!await loadPreview()) return null;
     isCheckoutLoading.value = true;
-    final result = await _repository.checkoutCart(
-      shippingAddressId: addressId,
-      idempotencyKey: _checkoutIdempotencyKey ??= const Uuid().v4(),
-    );
-    isCheckoutLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return null;
+    try {
+      if (!await loadPreview()) return null;
+      final result = await _repository.checkoutCart(
+        shippingAddressId: addressId,
+        idempotencyKey: _checkoutIdempotencyKey ??= const Uuid().v4(),
+      );
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return null;
+      }
+      checkoutSession.value = result.data;
+      lastOrderId = result.data!.orderId;
+      lastOrderSubtotal = subtotal;
+      lastOrderTax = estimatedTax;
+      lastOrderTotal = total;
+      lastOrderLines = List<CartLine>.of(cart);
+      return result.data;
+    } finally {
+      isCheckoutLoading.value = false;
     }
-    checkoutSession.value = result.data;
-    lastOrderId = result.data!.orderId;
-    lastOrderSubtotal = subtotal;
-    lastOrderTax = estimatedTax;
-    lastOrderTotal = total;
-    lastOrderLines = List<CartLine>.of(cart);
-    return result.data;
   }
 
   Future<CommerceOrder?> refreshCheckoutOrder() async {

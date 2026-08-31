@@ -75,28 +75,42 @@ class OrderTrackingScreen extends StatelessWidget {
                     16.verticalSpace,
 
                     if (order.api.canCancel)
-                      GestureDetector(
-                        onTap: () async {
-                          final cancelled = await controller.cancelOrder(order);
-                          if (cancelled && context.mounted) {
-                            Navigator.pop(context);
-                          }
-                        },
-                        child: Container(
-                          height: 50.h,
-                          width: double.maxFinite,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.red.shade300),
-                          ),
-                          child: Text(
-                            'Cancel order',
-                            style: getTextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red.shade500,
+                      Obx(
+                        () => GestureDetector(
+                          onTap: controller.isActionLoading.value
+                              ? null
+                              : () async {
+                                  final cancelled = await controller
+                                      .cancelOrder(order);
+                                  if (cancelled && context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                },
+                          child: Container(
+                            height: 50.h,
+                            width: double.maxFinite,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.red.shade300),
                             ),
+                            child: controller.isActionLoading.value
+                                ? const SizedBox(
+                                    height: 21,
+                                    width: 21,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Colors.red,
+                                    ),
+                                  )
+                                : Text(
+                                    'Cancel order',
+                                    style: getTextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red.shade500,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

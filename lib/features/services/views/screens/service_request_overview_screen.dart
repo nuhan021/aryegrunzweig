@@ -135,15 +135,29 @@ class _ServiceRequestOverviewScreenState
                           request.api.status !=
                               CustomerRequestStatus.completed &&
                           request.api.status != CustomerRequestStatus.cancelled)
-                        OutlinedButton(
-                          onPressed: () => _cancel(context),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 48.h),
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
-                          ),
-                          child: const Text('Cancel service request'),
-                        ),
+                        Obx(() {
+                          final loading = Get.find<ServicesController>()
+                              .isActionLoading
+                              .value;
+                          return OutlinedButton(
+                            onPressed: loading ? null : () => _cancel(context),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: Size(double.infinity, 48.h),
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                            ),
+                            child: loading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Colors.red,
+                                    ),
+                                  )
+                                : const Text('Cancel service request'),
+                          );
+                        }),
                       20.verticalSpace,
                       Container(
                         width: double.maxFinite,

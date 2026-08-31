@@ -11,6 +11,7 @@ class PaymentHistoryController extends GetxController {
   final payments = <PaymentResponse>[].obs;
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final loadingInvoiceIds = <String>{}.obs;
 
   num get totalPaid => payments
       .where(
@@ -40,30 +41,38 @@ class PaymentHistoryController extends GetxController {
   }
 
   Future<void> showInvoice(PaymentResponse payment) async {
-    final result = await _repository.getInvoice(payment.id);
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return;
-    }
-    final invoice = result.data!;
-    Get.dialog(
-      AlertDialog(
-        title: Text(invoice.invoiceNumber),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Date: ${invoice.date}'),
-            Text('Status: ${invoice.statusLabel}'),
-            Text('Billed to: ${invoice.billTo.name}'),
-            const SizedBox(height: 12),
-            Text(
-              'Total: ${invoice.currency.toUpperCase()} ${invoice.total.toStringAsFixed(2)}',
-            ),
+    if (loadingInvoiceIds.contains(payment.id)) return;
+    loadingInvoiceIds.add(payment.id);
+    try {
+      final result = await _repository.getInvoice(payment.id);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return;
+      }
+      final invoice = result.data!;
+      Get.dialog(
+        AlertDialog(
+          title: Text(invoice.invoiceNumber),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Date: ${invoice.date}'),
+              Text('Status: ${invoice.statusLabel}'),
+              Text('Billed to: ${invoice.billTo.name}'),
+              const SizedBox(height: 12),
+              Text(
+                'Total: ${invoice.currency.toUpperCase()} ${invoice.total.toStringAsFixed(2)}',
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: Get.back, child: const Text('Close')),
           ],
         ),
-        actions: [TextButton(onPressed: Get.back, child: const Text('Close'))],
-      ),
-    );
+      );
+    } finally {
+      loadingInvoiceIds.remove(payment.id);
+    }
   }
 }
