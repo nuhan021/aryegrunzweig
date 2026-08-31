@@ -172,6 +172,7 @@ class _ServicePaymentMethodScreenState
                       text: controller.isActionLoading.value
                           ? 'Opening Stripe...'
                           : 'Continue to Stripe Checkout',
+                      isLoading: controller.isActionLoading.value,
                       onPressed: controller.isActionLoading.value
                           ? () {}
                           : _openStripeCheckout,
@@ -181,6 +182,7 @@ class _ServicePaymentMethodScreenState
                   if (paymentId != null)
                     SrOutlineButton(
                       text: checking ? 'Checking...' : 'Refresh payment status',
+                      isLoading: checking,
                       onPressed: checking ? () {} : _refreshStatus,
                     ),
                 ],

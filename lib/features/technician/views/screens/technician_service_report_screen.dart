@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
@@ -477,23 +478,36 @@ class _TechnicianServiceReportScreenState
                       ),
                     ),
                     20.verticalSpace,
-                    GestureDetector(
-                      onTap: _submit,
-                      child: Container(
-                        height: 52.h,
-                        width: double.maxFinite,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Text(
-                          'Submit report for office review',
-                          style: getTextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    Obx(
+                      () => GestureDetector(
+                        onTap: widget.controller.isActionLoading.value
+                            ? null
+                            : _submit,
+                        child: Container(
+                          height: 52.h,
+                          width: double.maxFinite,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(10.r),
                           ),
+                          child: widget.controller.isActionLoading.value
+                              ? SizedBox(
+                                  height: 22.w,
+                                  width: 22.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2.3,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit report for office review',
+                                  style: getTextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                     ),

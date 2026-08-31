@@ -69,7 +69,21 @@ class TechnicianProfileScreen extends StatelessWidget {
                     Obx(
                       () => SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Available for jobs'),
+                        title: Row(
+                          children: [
+                            const Text('Available for jobs'),
+                            if (controller.isUpdatingAvailability.value) ...[
+                              10.horizontalSpace,
+                              SizedBox(
+                                height: 18.w,
+                                width: 18.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                         value:
                             controller.profile.value?.technician?.isAvailable ??
                             false,

@@ -141,7 +141,9 @@ class ViewProfileScreen extends StatelessWidget {
                           ),
                           40.verticalSpace,
                           GestureDetector(
-                            onTap: controller.handleLogout,
+                            onTap: controller.isLoggingOut.value
+                                ? null
+                                : controller.handleLogout,
                             child: Container(
                               height: 54.h,
                               width: double.maxFinite,
@@ -150,25 +152,35 @@ class ViewProfileScreen extends StatelessWidget {
                                 color: const Color(0xFFFF2F3B),
                                 borderRadius: BorderRadius.circular(10.r),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.logout,
-                                    size: 20.sp,
-                                    color: Colors.white,
-                                  ),
-                                  8.horizontalSpace,
-                                  Text(
-                                    'Logout',
-                                    style: getTextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                              child: controller.isLoggingOut.value
+                                  ? SizedBox(
+                                      height: 22.w,
+                                      width: 22.w,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2.3,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.logout,
+                                          size: 20.sp,
+                                          color: Colors.white,
+                                        ),
+                                        8.horizontalSpace,
+                                        Text(
+                                          'Logout',
+                                          style: getTextStyle(
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ],

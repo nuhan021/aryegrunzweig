@@ -57,6 +57,9 @@ class PaymentHistoryScreen extends StatelessWidget {
                       ...controller.payments.map(
                         (payment) => _PaymentTile(
                           payment: payment,
+                          isLoading: controller.loadingInvoiceIds.contains(
+                            payment.id,
+                          ),
                           onTap: () => controller.showInvoice(payment),
                         ),
                       ),
@@ -121,15 +124,20 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _PaymentTile extends StatelessWidget {
-  const _PaymentTile({required this.payment, required this.onTap});
+  const _PaymentTile({
+    required this.payment,
+    required this.onTap,
+    required this.isLoading,
+  });
 
   final PaymentResponse payment;
   final VoidCallback onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         width: double.maxFinite,
@@ -174,26 +182,33 @@ class _PaymentTile extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${payment.currency.toUpperCase()} ${payment.amount.toStringAsFixed(2)}',
-                  style: getTextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
+            if (isLoading)
+              const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.2),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${payment.currency.toUpperCase()} ${payment.amount.toStringAsFixed(2)}',
+                    style: getTextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                5.verticalSpace,
-                Text(
-                  payment.status.wireValue,
-                  style: getTextStyle(
-                    fontSize: 9.sp,
-                    color: const Color(0xFF22A866),
+                  5.verticalSpace,
+                  Text(
+                    payment.status.wireValue,
+                    style: getTextStyle(
+                      fontSize: 9.sp,
+                      color: const Color(0xFF22A866),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

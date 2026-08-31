@@ -10,6 +10,7 @@ class NotificationCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onMarkAsRead;
   final VoidCallback? onTap;
+  final bool isLoading;
 
   const NotificationCard({
     super.key,
@@ -17,6 +18,7 @@ class NotificationCard extends StatelessWidget {
     this.onDelete,
     this.onMarkAsRead,
     this.onTap,
+    this.isLoading = false,
   });
 
   IconData _getIcon() {
@@ -55,10 +57,12 @@ class NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        onTap?.call();
-        if (onTap == null && !notification.isRead) onMarkAsRead?.call();
-      },
+      onTap: isLoading
+          ? null
+          : () {
+              onTap?.call();
+              if (onTap == null && !notification.isRead) onMarkAsRead?.call();
+            },
       child: Container(
         margin: EdgeInsets.only(bottom: 16.h),
         padding: EdgeInsets.all(12.w),
@@ -126,7 +130,15 @@ class NotificationCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      if (!notification.isRead)
+                      if (isLoading)
+                        SizedBox(
+                          width: 18.w,
+                          height: 18.w,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      else if (!notification.isRead)
                         Container(
                           width: 8.w,
                           height: 8.w,

@@ -142,11 +142,16 @@ class HelpSupportScreen extends StatelessWidget {
                             onPressed: controller.isSubmitting.value
                                 ? null
                                 : controller.submitContact,
-                            child: Text(
-                              controller.isSubmitting.value
-                                  ? 'Sending...'
-                                  : 'Send message',
-                            ),
+                            child: controller.isSubmitting.value
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Send message'),
                           ),
                         ),
                       ),
