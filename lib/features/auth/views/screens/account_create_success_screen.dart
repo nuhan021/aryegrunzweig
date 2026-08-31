@@ -61,6 +61,7 @@ class AccountCreateSuccessScreen extends StatelessWidget {
                       text: controller.isSubmitting.value
                           ? 'Please wait...'
                           : 'Let\'s Explore',
+                      isLoading: controller.isSubmitting.value,
                       onPressed: () => _continue(context),
                     ),
                   ),

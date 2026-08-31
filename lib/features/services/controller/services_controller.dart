@@ -74,6 +74,7 @@ class ServicesController extends GetxController {
   final requests = <ServiceRequest>[].obs;
   final isLoading = false.obs;
   final isActionLoading = false.obs;
+  final openingRequestIds = <String>{}.obs;
   final errorMessage = ''.obs;
   final counterofferHistory = <QuoteCounteroffer>[].obs;
   final _categories = <String, ServiceCatalogCategory>{};
@@ -134,34 +135,40 @@ class ServicesController extends GetxController {
   Future<bool> acceptQuote(ServiceRequest request) async {
     if (isActionLoading.value) return false;
     isActionLoading.value = true;
-    final result = await _repository.acceptQuote(
-      id: request.api.id,
-      termsVersion: ApiConstants.termsVersion,
-    );
-    isActionLoading.value = false;
-    if (!result.isSuccess) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    try {
+      final result = await _repository.acceptQuote(
+        id: request.api.id,
+        termsVersion: ApiConstants.termsVersion,
+      );
+      if (!result.isSuccess) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      await refreshOne(request);
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    await refreshOne(request);
-    return true;
   }
 
   Future<bool> rejectQuote(ServiceRequest request, {String? reason}) async {
     if (isActionLoading.value) return false;
     isActionLoading.value = true;
-    final result = await _repository.rejectQuote(
-      request.api.id,
-      reason: reason,
-    );
-    isActionLoading.value = false;
-    if (!result.isSuccess) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    try {
+      final result = await _repository.rejectQuote(
+        request.api.id,
+        reason: reason,
+      );
+      if (!result.isSuccess) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      await refreshOne(request);
+      AppHelperFunctions.showSuccessSnackBar('Quotation rejected.');
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    await refreshOne(request);
-    AppHelperFunctions.showSuccessSnackBar('Quotation rejected.');
-    return true;
   }
 
   Future<bool> submitCounteroffer(
@@ -171,20 +178,23 @@ class ServicesController extends GetxController {
   }) async {
     if (isActionLoading.value) return false;
     isActionLoading.value = true;
-    final result = await _repository.counteroffer(
-      id: request.api.id,
-      requestedTotal: requestedTotal,
-      note: note,
-    );
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    try {
+      final result = await _repository.counteroffer(
+        id: request.api.id,
+        requestedTotal: requestedTotal,
+        note: note,
+      );
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      counterofferHistory.insert(0, result.data!);
+      await refreshOne(request);
+      AppHelperFunctions.showSuccessSnackBar('Negotiation request sent.');
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    counterofferHistory.insert(0, result.data!);
-    await refreshOne(request);
-    AppHelperFunctions.showSuccessSnackBar('Negotiation request sent.');
-    return true;
   }
 
   Future<void> loadCounteroffers(ServiceRequest request) async {
@@ -199,13 +209,16 @@ class ServicesController extends GetxController {
   Future<ServiceAuthorization?> authorizePayment(ServiceRequest request) async {
     if (isActionLoading.value) return null;
     isActionLoading.value = true;
-    final result = await _repository.authorizePayment(request.api.id);
-    isActionLoading.value = false;
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return null;
+    try {
+      final result = await _repository.authorizePayment(request.api.id);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return null;
+      }
+      return result.data;
+    } finally {
+      isActionLoading.value = false;
     }
-    return result.data;
   }
 
   Future<ServicePaymentStatus?> paymentStatus(String paymentId) async {
@@ -218,25 +231,37 @@ class ServicesController extends GetxController {
   }
 
   Future<bool> confirmReport(ServiceRequest request) async {
-    final result = await _repository.confirmReport(request.api.id);
-    if (!result.isSuccess) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    if (isActionLoading.value) return false;
+    isActionLoading.value = true;
+    try {
+      final result = await _repository.confirmReport(request.api.id);
+      if (!result.isSuccess) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      await refreshOne(request);
+      AppHelperFunctions.showSuccessSnackBar('Service report confirmed.');
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    await refreshOne(request);
-    AppHelperFunctions.showSuccessSnackBar('Service report confirmed.');
-    return true;
   }
 
   Future<bool> cancel(ServiceRequest request, String reason) async {
-    final result = await _repository.cancel(request.api.id, reason);
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    if (isActionLoading.value) return false;
+    isActionLoading.value = true;
+    try {
+      final result = await _repository.cancel(request.api.id, reason);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      _replace(_toViewModel(result.data!));
+      AppHelperFunctions.showSuccessSnackBar('Service request cancelled.');
+      return true;
+    } finally {
+      isActionLoading.value = false;
     }
-    _replace(_toViewModel(result.data!));
-    AppHelperFunctions.showSuccessSnackBar('Service request cancelled.');
-    return true;
   }
 
   List<ServiceRequest> get filteredRequests {
