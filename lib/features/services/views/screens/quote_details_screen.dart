@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/services_controller.dart';
+import '../../data/service_request_models.dart';
 import 'price_negotiation_screen.dart';
 import 'service_payment_method_screen.dart';
 
@@ -22,11 +24,38 @@ class QuoteDetailsScreen extends StatefulWidget {
 class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
   bool agreed = true;
   final ServicesController controller = Get.find<ServicesController>();
+  late ServiceRequest request;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    request = widget.request;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadRequest());
+  }
+
+  Future<void> _loadRequest() async {
+    final refreshed = await controller.refreshOne(request);
+    if (!mounted) return;
+
+    if (refreshed?.api.status == CustomerRequestStatus.accepted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ServicePaymentMethodScreen(request: refreshed!),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      if (refreshed != null) request = refreshed;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final request = widget.request;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -34,196 +63,202 @@ class _QuoteDetailsScreenState extends State<QuoteDetailsScreen> {
           children: [
             _QuoteHeader(request: request),
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _InfoCard(
-                      rows: [
-                        ('Requested by', request.requestedByName),
-                        ('Service', request.title),
-                        ('Address', request.address),
-                        (
-                          'Valid until',
-                          request.quoteValidUntil == null
-                              ? '-'
-                              : DateFormat(
-                                  'MMMM d, yyyy · h:mm a',
-                                ).format(request.quoteValidUntil!),
-                        ),
-                      ],
-                    ),
-                    16.verticalSpace,
-
-                    Container(
-                      width: double.maxFinite,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.maxFinite,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 12.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(14.r),
-                                topRight: Radius.circular(14.r),
-                              ),
-                            ),
-                            child: Text(
-                              'Quote Breakdown',
-                              style: getTextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 12.h,
-                            ),
-                            child: Column(
-                              children: [
-                                _PriceRow(
-                                  'Quoted service total',
-                                  request.quotedAmount,
-                                  isBold: true,
-                                ),
-                              ],
-                            ),
+              child: Skeletonizer(
+                enabled: isLoading,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 20.h,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _InfoCard(
+                        rows: [
+                          ('Requested by', request.requestedByName),
+                          ('Service', request.title),
+                          ('Address', request.address),
+                          (
+                            'Valid until',
+                            request.quoteValidUntil == null
+                                ? '-'
+                                : DateFormat(
+                                    'MMMM d, yyyy · h:mm a',
+                                  ).format(request.quoteValidUntil!),
                           ),
                         ],
                       ),
-                    ),
-                    16.verticalSpace,
+                      16.verticalSpace,
 
-                    if (request.quoteNote.trim().isNotEmpty)
                       Container(
                         width: double.maxFinite,
-                        padding: EdgeInsets.all(14.w),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12.r),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14.r),
                           border: Border.all(color: Colors.grey.shade200),
                         ),
-                        child: Text(
-                          '"${request.quoteNote}"',
-                          style: getTextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey.shade700,
-                            lineHeight: 1.5,
-                            textAlign: TextAlign.left,
-                          ),
-                        ),
-                      ),
-                    if (request.quoteNote.trim().isNotEmpty) 16.verticalSpace,
-
-                    Text(
-                      'A hold for the quoted amount will be placed on your card when you accept this quote. You will only be charged after the service is completed and approved.',
-                      style: getTextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey.shade600,
-                        lineHeight: 1.4,
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    14.verticalSpace,
-
-                    GestureDetector(
-                      onTap: () => setState(() => agreed = !agreed),
-                      child: Row(
-                        children: [
-                          Icon(
-                            agreed
-                                ? Icons.check_box
-                                : Icons.check_box_outline_blank,
-                            size: 20.sp,
-                            color: agreed ? AppColors.primary : Colors.grey,
-                          ),
-                          8.horizontalSpace,
-                          Expanded(
-                            child: Text(
-                              'I agree to the service terms and quotation.',
-                              style: getTextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black87,
-                                textAlign: TextAlign.left,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.maxFinite,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(14.r),
+                                  topRight: Radius.circular(14.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Quote Breakdown',
+                                style: getTextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                              child: Column(
+                                children: [
+                                  _PriceRow(
+                                    'Quoted service total',
+                                    request.quotedAmount,
+                                    isBold: true,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    20.verticalSpace,
+                      16.verticalSpace,
 
-                    SrPrimaryButton(
-                      text: 'Accept quote',
-                      onPressed: agreed ? () => _acceptQuote(request) : () {},
-                    ),
-                    10.verticalSpace,
-                    GestureDetector(
-                      onTap: () => _rejectQuote(request),
-                      child: Container(
-                        height: 50.h,
-                        width: double.maxFinite,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.red.shade200),
+                      if (request.quoteNote.trim().isNotEmpty)
+                        Container(
+                          width: double.maxFinite,
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Text(
+                            '"${request.quoteNote}"',
+                            style: getTextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.grey.shade700,
+                              lineHeight: 1.5,
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                          'Reject quote',
-                          style: getTextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.red.shade400,
+                      if (request.quoteNote.trim().isNotEmpty) 16.verticalSpace,
+
+                      Text(
+                        'A hold for the quoted amount will be placed on your card when you accept this quote. You will only be charged after the service is completed and approved.',
+                        style: getTextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey.shade600,
+                          lineHeight: 1.4,
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                      14.verticalSpace,
+
+                      GestureDetector(
+                        onTap: () => setState(() => agreed = !agreed),
+                        child: Row(
+                          children: [
+                            Icon(
+                              agreed
+                                  ? Icons.check_box
+                                  : Icons.check_box_outline_blank,
+                              size: 20.sp,
+                              color: agreed ? AppColors.primary : Colors.grey,
+                            ),
+                            8.horizontalSpace,
+                            Expanded(
+                              child: Text(
+                                'I agree to the service terms and quotation.',
+                                style: getTextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.black87,
+                                  textAlign: TextAlign.left,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      20.verticalSpace,
+
+                      SrPrimaryButton(
+                        text: 'Accept quote',
+                        onPressed: agreed ? () => _acceptQuote(request) : () {},
+                      ),
+                      10.verticalSpace,
+                      GestureDetector(
+                        onTap: () => _rejectQuote(request),
+                        child: Container(
+                          height: 50.h,
+                          width: double.maxFinite,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Text(
+                            'Reject quote',
+                            style: getTextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red.shade400,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    10.verticalSpace,
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PriceNegotiationScreen(request: request),
+                      10.verticalSpace,
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                PriceNegotiationScreen(request: request),
+                          ),
                         ),
-                      ),
-                      child: Container(
-                        height: 50.h,
-                        width: double.maxFinite,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Text(
-                          'Go for negotiation',
-                          style: getTextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                        child: Container(
+                          height: 50.h,
+                          width: double.maxFinite,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            'Go for negotiation',
+                            style: getTextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../data/profile_models.dart';
 import '../../data/profile_repository.dart';
 
@@ -41,7 +42,7 @@ class PaymentHistoryController extends GetxController {
   Future<void> showInvoice(PaymentResponse payment) async {
     final result = await _repository.getInvoice(payment.id);
     if (!result.isSuccess || result.data == null) {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
       return;
     }
     final invoice = result.data!;

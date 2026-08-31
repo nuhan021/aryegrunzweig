@@ -444,6 +444,65 @@ class CustomerServiceReport {
   final DateTime submittedAt;
 }
 
+class ServiceRequestCustomer {
+  const ServiceRequestCustomer({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.phone,
+  });
+
+  factory ServiceRequestCustomer.fromJson(Map<String, dynamic> json) =>
+      ServiceRequestCustomer(
+        id: _requiredString(json, 'id'),
+        firstName: _requiredString(json, 'firstName'),
+        lastName: _requiredString(json, 'lastName'),
+        email: _requiredString(json, 'email'),
+        phone: _nullableString(json, 'phone'),
+      );
+
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String? phone;
+}
+
+class ServiceRequestAddress {
+  const ServiceRequestAddress({
+    required this.id,
+    required this.line1,
+    required this.apartment,
+    required this.city,
+    required this.state,
+    required this.zipCode,
+    required this.country,
+    required this.isPrimary,
+  });
+
+  factory ServiceRequestAddress.fromJson(Map<String, dynamic> json) =>
+      ServiceRequestAddress(
+        id: _requiredString(json, 'id'),
+        line1: _requiredString(json, 'line1'),
+        apartment: _nullableString(json, 'apartment'),
+        city: _requiredString(json, 'city'),
+        state: _requiredString(json, 'state'),
+        zipCode: _requiredString(json, 'zipCode'),
+        country: _requiredString(json, 'country'),
+        isPrimary: _requiredBool(json, 'isPrimary'),
+      );
+
+  final String id;
+  final String line1;
+  final String? apartment;
+  final String city;
+  final String state;
+  final String zipCode;
+  final String country;
+  final bool isPrimary;
+}
+
 class CustomerServiceRequest {
   const CustomerServiceRequest({
     required this.id,
@@ -458,6 +517,8 @@ class CustomerServiceRequest {
     required this.scheduledStart,
     required this.scheduledEnd,
     required this.cancellationReason,
+    required this.customer,
+    required this.address,
     required this.media,
     required this.quotation,
     required this.report,
@@ -478,6 +539,14 @@ class CustomerServiceRequest {
         scheduledStart: _nullableDateTime(json, 'scheduledStart'),
         scheduledEnd: _nullableDateTime(json, 'scheduledEnd'),
         cancellationReason: _nullableString(json, 'cancellationReason'),
+        customer: json['customer'] == null
+            ? null
+            : ServiceRequestCustomer.fromJson(
+                _map(json['customer'], 'customer'),
+              ),
+        address: json['address'] == null
+            ? null
+            : ServiceRequestAddress.fromJson(_map(json['address'], 'address')),
         media: _requiredList(json, 'media')
             .map((item) => ServiceMedia.fromJson(_map(item, 'media')))
             .toList(growable: false),
@@ -506,6 +575,8 @@ class CustomerServiceRequest {
   final DateTime? scheduledStart;
   final DateTime? scheduledEnd;
   final String? cancellationReason;
+  final ServiceRequestCustomer? customer;
+  final ServiceRequestAddress? address;
   final List<ServiceMedia> media;
   final CustomerQuote? quotation;
   final CustomerServiceReport? report;

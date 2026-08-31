@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../core/utils/helpers/app_helper.dart';
 import '../../auth/controller/auth_controller.dart';
 import '../../auth/models/auth_models.dart';
 import '../../profile/data/profile_models.dart';
@@ -29,7 +30,7 @@ class TechnicianProfileController extends GetxController {
       profile.value = result.data;
       Get.find<AuthController>().currentProfile.value = result.data;
     } else {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
     }
     isLoading.value = false;
   }
@@ -42,9 +43,9 @@ class TechnicianProfileController extends GetxController {
     );
     if (result.isSuccess) {
       await load();
-      Get.snackbar('Success', 'Availability updated');
+      AppHelperFunctions.showSuccessSnackBar('Availability updated');
     } else {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
     }
     isUpdatingAvailability.value = false;
   }

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../auth/controller/auth_controller.dart';
 import '../../data/profile_models.dart';
 import '../../data/profile_repository.dart';
@@ -31,7 +32,7 @@ class NotificationPreferencesController extends GetxController {
       emailEnabled.value = result.data!.notificationEmail;
       pushEnabled.value = result.data!.notificationPush;
     } else {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
     }
     isLoading.value = false;
   }
@@ -47,10 +48,10 @@ class NotificationPreferencesController extends GetxController {
     );
     isSaving.value = false;
     if (!result.isSuccess) {
-      Get.snackbar('Error', result.errorMessage);
+      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
       return;
     }
     await Get.find<AuthController>().refreshCurrentProfile();
-    Get.snackbar('Success', 'Notification preferences updated');
+    AppHelperFunctions.showSuccessSnackBar('Notification preferences updated');
   }
 }

@@ -16,6 +16,7 @@ class TechnicianProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(TechnicianProfileController());
+    final authController = Get.find<AuthController>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -31,76 +32,70 @@ class TechnicianProfileScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(16.w, 22.h, 16.w, 26.h),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.sizeOf(context).height * .55,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Account Info',
-                        style: getTextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF172231),
-                          textAlign: TextAlign.left,
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Account Info',
+                      style: getTextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF172231),
+                        textAlign: TextAlign.left,
                       ),
-                      14.verticalSpace,
-                      Obx(
-                        () => _AccountInfoCard(
-                          rows: [
-                            ('Full name', controller.fullName),
-                            (
-                              'Email address',
-                              controller.profile.value?.email ?? '',
-                            ),
-                            (
-                              'Phone number',
-                              controller.profile.value?.phone ?? '—',
-                            ),
-                            (
-                              'Service area',
-                              controller
-                                      .profile
-                                      .value
-                                      ?.technician
-                                      ?.serviceArea ??
-                                  '—',
-                            ),
-                          ],
-                        ),
-                      ),
-                      14.verticalSpace,
-                      Obx(
-                        () => SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Available for jobs'),
-                          value:
-                              controller
-                                  .profile
-                                  .value
-                                  ?.technician
-                                  ?.isAvailable ??
-                              false,
-                          onChanged: controller.isUpdatingAvailability.value
-                              ? null
-                              : controller.setAvailability,
-                        ),
-                      ),
-                      46.verticalSpace,
-                      _EditProfileButton(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const EditProfileScreen(),
+                    ),
+                    14.verticalSpace,
+                    Obx(
+                      () => _AccountInfoCard(
+                        rows: [
+                          ('Full name', controller.fullName),
+                          (
+                            'Email address',
+                            controller.profile.value?.email ?? '',
                           ),
+                          (
+                            'Phone number',
+                            controller.profile.value?.phone ?? '—',
+                          ),
+                          (
+                            'Service area',
+                            controller.profile.value?.technician?.serviceArea ??
+                                '—',
+                          ),
+                        ],
+                      ),
+                    ),
+                    14.verticalSpace,
+                    Obx(
+                      () => SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Available for jobs'),
+                        value:
+                            controller.profile.value?.technician?.isAvailable ??
+                            false,
+                        onChanged: controller.isUpdatingAvailability.value
+                            ? null
+                            : controller.setAvailability,
+                      ),
+                    ),
+                    22.verticalSpace,
+                    _EditProfileButton(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EditProfileScreen(),
                         ),
                       ),
-                      190.verticalSpace,
-                      _LogoutButton(onTap: () => _logout()),
-                    ],
-                  ),
+                    ),
+                    28.verticalSpace,
+                    Obx(
+                      () => _LogoutButton(
+                        isLoading: authController.isSubmitting.value,
+                        onTap: authController.isSubmitting.value
+                            ? null
+                            : _logout,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -336,16 +331,17 @@ class _EditProfileButton extends StatelessWidget {
 }
 
 class _LogoutButton extends StatelessWidget {
-  const _LogoutButton({required this.onTap});
+  const _LogoutButton({required this.onTap, required this.isLoading});
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.maxFinite,
       height: 56.h,
-      child: FilledButton.icon(
+      child: FilledButton(
         onPressed: onTap,
         style: FilledButton.styleFrom(
           backgroundColor: const Color(0xFFFF303B),
@@ -353,14 +349,30 @@ class _LogoutButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.r),
           ),
         ),
-        icon: Icon(Icons.logout, color: Colors.white, size: 22.sp),
-        label: Text(
-          'Logout',
-          style: getTextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading)
+              SizedBox(
+                width: 20.w,
+                height: 20.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: Colors.white,
+                ),
+              )
+            else
+              Icon(Icons.logout, color: Colors.white, size: 22.sp),
+            10.horizontalSpace,
+            Text(
+              isLoading ? 'Logging out...' : 'Logout',
+              style: getTextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,29 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/constants/api_constants.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../controller/technician_jobs_controller.dart';
 import '../../controller/technician_equipment_controller.dart';
 import 'technician_equipment_screen.dart';
 import 'technician_job_photos_screen.dart';
 import 'technician_service_report_screen.dart';
 
-class TechnicianJobDetailsScreen extends StatelessWidget {
+class TechnicianJobDetailsScreen extends StatefulWidget {
   const TechnicianJobDetailsScreen({super.key, required this.controller});
 
   final TechnicianJobsController controller;
 
   @override
-  Widget build(BuildContext context) {
-    final job = controller.job;
+  State<TechnicianJobDetailsScreen> createState() =>
+      _TechnicianJobDetailsScreenState();
+}
 
+class _TechnicianJobDetailsScreenState
+    extends State<TechnicianJobDetailsScreen> {
+  TechnicianJobsController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.refreshSelected();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Obx(
-          () => Column(
+        child: Obx(() {
+          final job = controller.job;
+          final issuePhotos = job.api.media
+              .where((media) {
+                final kind = media.kind.toUpperCase();
+                final isImage = media.mimeType?.startsWith('image/') ?? true;
+                return isImage &&
+                    kind != 'BEFORE' &&
+                    kind != 'AFTER' &&
+                    kind != 'EQUIPMENT' &&
+                    kind != 'INLET';
+              })
+              .toList(growable: false);
+
+          return Column(
             children: [
               _JobHeader(controller: controller),
               Expanded(
@@ -40,29 +71,10 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
                           _DataRow('Address', job.address, isLast: true),
                           Padding(
                             padding: EdgeInsets.fromLTRB(10.w, 8.h, 10.w, 12.h),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _SmallAction(
-                                    text: 'Call customer',
-                                    isPrimary: true,
-                                    onTap: () => _showMessage(
-                                      context,
-                                      'Calling ${job.phone}',
-                                    ),
-                                  ),
-                                ),
-                                12.horizontalSpace,
-                                Expanded(
-                                  child: _SmallAction(
-                                    text: 'Get directions',
-                                    onTap: () => _showMessage(
-                                      context,
-                                      'Opening directions to ${job.address}',
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: _SmallAction(
+                              text: 'Call customer',
+                              isPrimary: true,
+                              onTap: () => _callCustomer(job.phone),
                             ),
                           ),
                         ],
@@ -124,21 +136,25 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
                               ),
                             ),
                             12.verticalSpace,
-                            Row(
-                              children: List.generate(
-                                3,
-                                (index) => Expanded(
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                      right: index == 2 ? 0 : 8.w,
-                                    ),
-                                    child: const _PhotoPlaceholder(
-                                      label: 'Issue photo',
+                            if (issuePhotos.isEmpty)
+                              const _PhotoEmptyState()
+                            else
+                              SizedBox(
+                                height: 82.h,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: issuePhotos.length,
+                                  separatorBuilder: (_, _) => 8.horizontalSpace,
+                                  itemBuilder: (context, index) => SizedBox(
+                                    width: 104.w,
+                                    child: _IssuePhoto(
+                                      imageUrl: _mediaUrl(
+                                        issuePhotos[index].url,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -254,8 +270,8 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
+          );
+        }),
       ),
     );
   }
@@ -265,9 +281,32 @@ class TechnicianJobDetailsScreen extends StatelessWidget {
   }
 
   void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppHelperFunctions.showSnackBar(message);
+  }
+
+  Future<void> _callCustomer(String phoneNumber) async {
+    final phone = phoneNumber.trim();
+    final digitCount = RegExp(r'\d').allMatches(phone).length;
+    if (digitCount < 7) {
+      AppHelperFunctions.showErrorSnackBar(
+        'The customer phone number was not provided by the API.',
+      );
+      return;
+    }
+
+    try {
+      final opened = await launchUrl(
+        Uri(scheme: 'tel', path: phone),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened) {
+        AppHelperFunctions.showErrorSnackBar(
+          'Could not open the mobile dialer.',
+        );
+      }
+    } catch (_) {
+      AppHelperFunctions.showErrorSnackBar('Could not open the mobile dialer.');
+    }
   }
 
   Future<void> _addNotes(BuildContext context) async {
@@ -469,6 +508,7 @@ class _DataRow extends StatelessWidget {
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF667C9B),
+                lineHeight: 1.4,
                 textAlign: TextAlign.left,
               ),
             ),
@@ -482,6 +522,7 @@ class _DataRow extends StatelessWidget {
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF172231),
+                lineHeight: 1.4,
               ),
             ),
           ),
@@ -491,15 +532,36 @@ class _DataRow extends StatelessWidget {
   }
 }
 
-class _PhotoPlaceholder extends StatelessWidget {
-  const _PhotoPlaceholder({required this.label});
+class _IssuePhoto extends StatelessWidget {
+  const _IssuePhoto({required this.imageUrl});
 
-  final String label;
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10.r),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) =>
+            progress == null ? child : const _PhotoEmptyState(showLabel: false),
+        errorBuilder: (_, _, _) => const _PhotoEmptyState(),
+      ),
+    );
+  }
+}
+
+class _PhotoEmptyState extends StatelessWidget {
+  const _PhotoEmptyState({this.showLabel = true});
+
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72.h,
+      width: double.maxFinite,
+      height: 82.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(color: const Color(0xFFDCE5EF), width: 1.5),
@@ -512,19 +574,27 @@ class _PhotoPlaceholder extends StatelessWidget {
             size: 24.sp,
             color: const Color(0xFF92A7C5),
           ),
-          5.verticalSpace,
-          Text(
-            label,
-            style: getTextStyle(
-              fontSize: 9.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF667C9B),
+          if (showLabel) ...[
+            5.verticalSpace,
+            Text(
+              'No issue photos uploaded',
+              style: getTextStyle(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF667C9B),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
+}
+
+String _mediaUrl(String value) {
+  final uri = Uri.tryParse(value);
+  if (uri?.hasScheme ?? false) return value;
+  return '${ApiConstants.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
 }
 
 class _SmallAction extends StatelessWidget {

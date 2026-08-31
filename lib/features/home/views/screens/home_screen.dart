@@ -4,6 +4,7 @@ import 'package:aryegrunzweig/core/utils/constants/icon_path.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/home_activity_cards.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/home_quick_action_cards.dart';
 import 'package:aryegrunzweig/features/home/views/widgets/shop_products_preview.dart';
+import 'package:aryegrunzweig/features/home/controller/home_controller.dart';
 import 'package:aryegrunzweig/features/profile/view_profile/controllers/view_profile_controller.dart';
 import 'package:aryegrunzweig/features/services/controller/services_controller.dart';
 import 'package:aryegrunzweig/features/services/data/service_request_models.dart';
@@ -32,6 +33,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Instantiate the lazily registered booking controller while Home loads so
+    // its service catalog is already being fetched before the user taps Book.
+    Get.find<HomeController>();
     _profileController = Get.find<ViewProfileController>();
     _servicesController = Get.find<ServicesController>();
     _ordersController = Get.find<OrdersController>();

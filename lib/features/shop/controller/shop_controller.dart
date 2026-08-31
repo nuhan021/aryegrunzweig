@@ -21,6 +21,18 @@ class ShopProduct {
 class CartLine {
   const CartLine({required this.api});
   final CommerceCartItem api;
+
+  CartLine withQuantity(int quantity) => CartLine(
+    api: CommerceCartItem(
+      id: api.id,
+      productId: api.productId,
+      quantity: quantity,
+      unitPrice: api.unitPrice,
+      lineTotal: api.unitPrice * quantity,
+      product: api.product,
+    ),
+  );
+
   ShopProduct get product => ShopProduct(
     api: CommerceProduct(
       id: api.product.id,
@@ -64,15 +76,32 @@ class ShopController extends GetxController {
   final isLoading = false.obs;
   final isCartLoading = false.obs;
   final isCheckoutLoading = false.obs;
+  final addingProductIds = <String>{}.obs;
+  final updatingCartProductIds = <String>{}.obs;
   final errorMessage = ''.obs;
   final preview = Rxn<CheckoutPreview>();
   final checkoutSession = Rxn<CheckoutSession>();
   final completedOrder = Rxn<CommerceOrder>();
   String? _checkoutIdempotencyKey;
+  final _quantitySyncing = <String>{};
+  final _confirmedQuantities = <String, int>{};
 
   int get totalPages =>
       totalItems.value == 0 ? 1 : (totalItems.value / itemsPerPage).ceil();
   List<ShopProduct> get currentPageProducts => products;
+  int get cartItemCount => cart.fold(0, (total, line) => total + line.quantity);
+  bool isAddingProduct(String productId) =>
+      addingProductIds.contains(productId);
+  bool isUpdatingCartProduct(String productId) =>
+      updatingCartProductIds.contains(productId);
+  String? cartProductImage(CartLine line) {
+    final cartImage = line.product.imageUrl;
+    if (cartImage != null && cartImage.trim().isNotEmpty) return cartImage;
+    return products
+        .firstWhereOrNull((product) => product.id == line.api.productId)
+        ?.imageUrl;
+  }
+
   double get subtotal => preview.value?.subtotal.toDouble() ?? 0;
   double get estimatedTax => preview.value?.tax.toDouble() ?? 0;
   double get shippingFee => preview.value?.shippingFee.toDouble() ?? 0;
@@ -170,33 +199,88 @@ class ShopController extends GetxController {
   }
 
   Future<bool> addToCart(ShopProduct product, {int quantity = 1}) async {
-    final result = await _repository.addCartItem(product.id, quantity);
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return false;
+    if (isAddingProduct(product.id)) return false;
+    addingProductIds.add(product.id);
+    try {
+      final result = await _repository.addCartItem(product.id, quantity);
+      if (!result.isSuccess || result.data == null) {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+        return false;
+      }
+      _setCart(result.data!);
+      AppHelperFunctions.showSuccessSnackBar(
+        quantity == 1
+            ? '${product.name} added to your cart.'
+            : '$quantity × ${product.name} added to your cart.',
+      );
+      return true;
+    } finally {
+      addingProductIds.remove(product.id);
     }
-    _setCart(result.data!);
-    return true;
   }
 
-  Future<void> incrementQuantity(CartLine line) async =>
-      _updateQuantity(line, line.quantity + 1);
+  Future<void> incrementQuantity(CartLine line) async {
+    final current = _cartLine(line.api.productId);
+    if (current == null || current.quantity >= current.api.product.stock) {
+      return;
+    }
+    await _updateQuantity(current, current.quantity + 1);
+  }
 
   Future<void> decrementQuantity(CartLine line) async {
-    if (line.quantity > 1) await _updateQuantity(line, line.quantity - 1);
+    final current = _cartLine(line.api.productId);
+    if (current != null && current.quantity > 1) {
+      await _updateQuantity(current, current.quantity - 1);
+    }
   }
 
   Future<void> _updateQuantity(CartLine line, int quantity) async {
-    final result = await _repository.updateCartItem(
-      line.api.productId,
-      quantity,
-    );
-    if (!result.isSuccess || result.data == null) {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
-      return;
+    final productId = line.api.productId;
+    _confirmedQuantities.putIfAbsent(productId, () => line.quantity);
+    _replaceCartQuantity(productId, quantity);
+    _checkoutIdempotencyKey = null;
+    checkoutSession.value = null;
+
+    if (_quantitySyncing.contains(productId)) return;
+    _quantitySyncing.add(productId);
+    updatingCartProductIds.add(productId);
+    try {
+      while (true) {
+        final current = _cartLine(productId);
+        if (current == null) return;
+        final requestedQuantity = current.quantity;
+        final result = await _repository.updateCartItem(
+          productId,
+          requestedQuantity,
+        );
+        if (!result.isSuccess || result.data == null) {
+          final confirmed = _confirmedQuantities[productId];
+          if (confirmed != null) _replaceCartQuantity(productId, confirmed);
+          AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+          return;
+        }
+
+        _confirmedQuantities[productId] = requestedQuantity;
+        if (_cartLine(productId)?.quantity != requestedQuantity) continue;
+
+        _setCart(result.data!);
+        await loadPreview();
+        return;
+      }
+    } finally {
+      _quantitySyncing.remove(productId);
+      _confirmedQuantities.remove(productId);
+      updatingCartProductIds.remove(productId);
     }
-    _setCart(result.data!);
-    await loadPreview();
+  }
+
+  CartLine? _cartLine(String productId) =>
+      cart.firstWhereOrNull((line) => line.api.productId == productId);
+
+  void _replaceCartQuantity(String productId, int quantity) {
+    final index = cart.indexWhere((line) => line.api.productId == productId);
+    if (index < 0) return;
+    cart[index] = cart[index].withQuantity(quantity);
   }
 
   Future<void> removeFromCart(CartLine line) async {
@@ -305,6 +389,52 @@ class ShopController extends GetxController {
     lastOrderTotal = order.total.toDouble();
     lastOrderDeliveryDate = order.estimatedDelivery?.toLocal();
     return order;
+  }
+
+  bool isOrderPaid(CommerceOrder order) {
+    final paymentStatus = order.paymentStatus?.trim().toUpperCase();
+    return order.paidAt != null ||
+        const {
+          'PAID',
+          'AUTHORIZED',
+          'CAPTURED',
+          'SUCCEEDED',
+          'SUCCESS',
+        }.contains(paymentStatus) ||
+        const {
+          CommerceOrderStatus.paid,
+          CommerceOrderStatus.processing,
+          CommerceOrderStatus.shipped,
+          CommerceOrderStatus.delivered,
+        }.contains(order.status);
+  }
+
+  Future<CommerceOrder?> waitForCheckoutPayment({
+    int attempts = 6,
+    Duration interval = const Duration(seconds: 2),
+  }) async {
+    CommerceOrder? latest;
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      latest = await refreshCheckoutOrder();
+      if (latest != null && isOrderPaid(latest)) return latest;
+      if (attempt < attempts - 1) await Future<void>.delayed(interval);
+    }
+    return latest;
+  }
+
+  Future<void> finishPaidCheckout(CommerceOrder order) async {
+    completedOrder.value = order;
+    cart.clear();
+    preview.value = null;
+    checkoutSession.value = null;
+    _checkoutIdempotencyKey = null;
+
+    final result = await _repository.clearCart();
+    if (!result.isSuccess) {
+      AppHelperFunctions.showErrorSnackBar(
+        'Payment succeeded, but the cart could not be cleared. Pull to refresh and try again.',
+      );
+    }
   }
 
   final emailController = TextEditingController();

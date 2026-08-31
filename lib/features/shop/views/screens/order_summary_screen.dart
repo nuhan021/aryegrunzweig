@@ -1,16 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_app_bar.dart';
+import '../../../../core/common/widgets/hosted_checkout_webview.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../../orders/controller/orders_controller.dart';
 import '../../controller/shop_controller.dart';
-import '../../data/commerce_models.dart';
 import 'order_success_screen.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
@@ -20,66 +20,48 @@ class OrderSummaryScreen extends StatefulWidget {
   State<OrderSummaryScreen> createState() => _OrderSummaryScreenState();
 }
 
-class _OrderSummaryScreenState extends State<OrderSummaryScreen>
-    with WidgetsBindingObserver {
+class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   final ShopController controller = Get.find<ShopController>();
   bool checkingPayment = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     controller.loadPreview();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed &&
-        controller.checkoutSession.value != null) {
-      _refreshPayment();
-    }
   }
 
   Future<void> _placeOrder() async {
     final session = await controller.placeOrder();
     if (session == null || !mounted) return;
-    final opened = await launchUrl(
-      Uri.parse(session.checkoutUrl),
-      mode: LaunchMode.externalApplication,
+    final checkoutResult = await Navigator.push<HostedCheckoutResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HostedCheckoutWebView(
+          checkoutUrl: session.checkoutUrl,
+          title: 'Complete payment',
+        ),
+      ),
     );
-    if (!opened) {
-      AppHelperFunctions.showErrorSnackBar(
-        'Unable to open the secure Stripe Checkout page.',
-      );
-    }
+    if (!mounted) return;
+    if (checkoutResult == HostedCheckoutResult.cancelled) return;
+    await _refreshPayment(
+      attempts: checkoutResult == HostedCheckoutResult.completed ? 8 : 3,
+    );
   }
 
-  Future<void> _refreshPayment() async {
+  Future<void> _refreshPayment({int attempts = 4}) async {
     if (checkingPayment) return;
     setState(() => checkingPayment = true);
-    final order = await controller.refreshCheckoutOrder();
+    final order = await controller.waitForCheckoutPayment(attempts: attempts);
     if (!mounted) return;
     setState(() => checkingPayment = false);
-    final paid =
-        order != null &&
-        (const {
-              'AUTHORIZED',
-              'CAPTURED',
-              'SUCCEEDED',
-            }.contains(order.paymentStatus) ||
-            const {
-              CommerceOrderStatus.paid,
-              CommerceOrderStatus.processing,
-              CommerceOrderStatus.shipped,
-              CommerceOrderStatus.delivered,
-            }.contains(order.status));
-    if (!paid) return;
+    if (order == null || !controller.isOrderPaid(order)) {
+      AppHelperFunctions.showErrorSnackBar(
+        'Payment is not confirmed yet. If Stripe charged you, wait a moment and refresh again.',
+      );
+      return;
+    }
+    await controller.finishPaidCheckout(order);
     if (Get.isRegistered<OrdersController>()) {
       await Get.find<OrdersController>().loadAll();
     }
@@ -122,19 +104,8 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen>
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                height: 80.h,
-                                width: 80.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.image_outlined,
-                                  color: Colors.grey.shade400,
-                                  size: 28.sp,
-                                ),
+                              _CartProductImage(
+                                imageUrl: controller.cartProductImage(line),
                               ),
                               12.horizontalSpace,
                               Expanded(
@@ -163,6 +134,10 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen>
                                     10.verticalSpace,
                                     _QuantityStepper(
                                       quantity: line.quantity,
+                                      isSyncing: controller
+                                          .isUpdatingCartProduct(
+                                            line.api.productId,
+                                          ),
                                       onDecrement: () =>
                                           controller.decrementQuantity(line),
                                       onIncrement: () =>
@@ -352,11 +327,13 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen>
 class _QuantityStepper extends StatelessWidget {
   const _QuantityStepper({
     required this.quantity,
+    required this.isSyncing,
     required this.onDecrement,
     required this.onIncrement,
   });
 
   final int quantity;
+  final bool isSyncing;
   final VoidCallback onDecrement;
   final VoidCallback onIncrement;
 
@@ -384,13 +361,26 @@ class _QuantityStepper extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.w),
-            child: Text(
-              '$quantity',
-              style: getTextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$quantity',
+                  style: getTextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+                if (isSyncing) ...[
+                  5.horizontalSpace,
+                  SizedBox(
+                    width: 10.w,
+                    height: 10.w,
+                    child: const CircularProgressIndicator(strokeWidth: 1.5),
+                  ),
+                ],
+              ],
             ),
           ),
           GestureDetector(
@@ -402,6 +392,48 @@ class _QuantityStepper extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CartProductImage extends StatelessWidget {
+  const _CartProductImage({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholder = Icon(
+      Icons.image_outlined,
+      color: Colors.grey.shade400,
+      size: 28.sp,
+    );
+
+    return Container(
+      height: 80.h,
+      width: 80.h,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      alignment: Alignment.center,
+      child: imageUrl == null || imageUrl!.trim().isEmpty
+          ? placeholder
+          : CachedNetworkImage(
+              imageUrl: imageUrl!,
+              width: double.maxFinite,
+              height: double.maxFinite,
+              fit: BoxFit.contain,
+              placeholder: (_, __) => Center(
+                child: SizedBox(
+                  width: 18.w,
+                  height: 18.w,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (_, __, ___) => placeholder,
+            ),
     );
   }
 }

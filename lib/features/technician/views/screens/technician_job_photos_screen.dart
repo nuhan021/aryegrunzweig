@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../controller/technician_jobs_controller.dart';
 
 class TechnicianJobPhotosScreen extends StatefulWidget {
@@ -37,10 +38,8 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
     final hasBeforePhoto = _beforePhotos.any((photo) => photo != null);
     final hasAfterPhoto = _afterPhotos.any((photo) => photo != null);
     if (!hasBeforePhoto || !hasAfterPhoto) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add at least one before and one after photo.'),
-        ),
+      AppHelperFunctions.showErrorSnackBar(
+        'Add at least one before and one after photo.',
       );
       return;
     }
@@ -55,9 +54,7 @@ class _TechnicianJobPhotosScreenState extends State<TechnicianJobPhotosScreen> {
     if (!mounted) return;
     setState(() => _uploading = false);
     if (!successful) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Job photos uploaded successfully.')),
-    );
+    AppHelperFunctions.showSuccessSnackBar('Job photos uploaded successfully.');
     Navigator.pop(context);
   }
 

@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 class AppHelperFunctions {
   AppHelperFunctions._();
 
-  static void showSnackBar(String message) {
+  static void showSnackBar(String message, {String title = 'Notice'}) {
     showAwesomeSnackBar(
-      title: 'Notice',
+      title: title,
       message: message,
       contentType: ContentType.help,
     );

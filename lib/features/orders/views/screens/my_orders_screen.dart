@@ -7,7 +7,7 @@ import '../../../../core/common/widgets/custom_app_bar.dart';
 import '../../../../core/utils/constants/colors.dart';
 import '../../controller/orders_controller.dart';
 import '../../../shop/data/commerce_models.dart';
-import 'order_delivered_screen.dart';
+import 'order_details_screen.dart';
 import 'order_tracking_screen.dart';
 import '../widgets/order_card.dart';
 
@@ -15,6 +15,7 @@ class MyOrdersScreen extends StatelessWidget {
   MyOrdersScreen({super.key});
 
   final OrdersController controller = Get.find<OrdersController>();
+  final RxnString _openingOrderAction = RxnString();
 
   static const _tabs = ['Active orders', 'Delivered', 'Returns'];
 
@@ -23,16 +24,23 @@ class MyOrdersScreen extends StatelessWidget {
     ShopOrder order, {
     required bool details,
   }) async {
-    final refreshed = await controller.refreshOrder(order) ?? order;
-    if (!context.mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => details && refreshed.status == OrderStatus.delivered
-            ? OrderDeliveredScreen(order: refreshed)
-            : OrderTrackingScreen(order: refreshed),
-      ),
-    );
+    if (_openingOrderAction.value != null) return;
+    final actionKey = '${order.id}:${details ? 'details' : 'tracking'}';
+    _openingOrderAction.value = actionKey;
+    try {
+      final refreshed = await controller.refreshOrder(order) ?? order;
+      if (!context.mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => details
+              ? OrderDetailsScreen(order: refreshed)
+              : OrderTrackingScreen(order: refreshed),
+        ),
+      );
+    } finally {
+      _openingOrderAction.value = null;
+    }
   }
 
   @override
@@ -131,6 +139,14 @@ class MyOrdersScreen extends StatelessWidget {
                               .map(
                                 (order) => OrderCard(
                                   order: order,
+                                  isTracking:
+                                      _openingOrderAction.value ==
+                                      '${order.id}:tracking',
+                                  isOpeningDetails:
+                                      _openingOrderAction.value ==
+                                      '${order.id}:details',
+                                  actionsEnabled:
+                                      _openingOrderAction.value == null,
                                   onTrackOrder: () => _openOrder(
                                     context,
                                     order,

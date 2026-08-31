@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../../core/utils/helpers/app_helper.dart';
+
 import '../../../../../core/common/styles/global_text_style.dart';
 import '../../../../../core/common/widgets/custom_app_bar.dart';
 import '../../../../../core/utils/constants/colors.dart';
@@ -33,9 +35,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   void _changePassword() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password changed successfully.')),
-    );
+    AppHelperFunctions.showSuccessSnackBar('Password changed successfully.');
     Navigator.of(context).pop();
   }
 

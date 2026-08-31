@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/icon_path.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import '../../controller/auth_controller.dart';
 
@@ -76,9 +77,7 @@ class AccountCreateSuccessScreen extends StatelessWidget {
     final success = await controller.completeOnboarding();
     if (!context.mounted) return;
     if (!success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(controller.errorMessage.value)));
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
       return;
     }
     Get.find<AppBottomNavBarController>().resetToFirstTab();

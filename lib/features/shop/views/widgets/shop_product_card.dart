@@ -11,11 +11,13 @@ class ShopProductCard extends StatelessWidget {
     required this.product,
     required this.onAddToCart,
     required this.onTap,
+    this.isAdding = false,
   });
 
   final ShopProduct product;
   final VoidCallback onAddToCart;
   final VoidCallback onTap;
+  final bool isAdding;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +94,7 @@ class ShopProductCard extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: onAddToCart,
+                  onTap: isAdding ? null : onAddToCart,
                   child: Container(
                     height: 26.w,
                     width: 26.w,
@@ -101,11 +103,20 @@ class ShopProductCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 14.sp,
-                      color: AppColors.primary,
-                    ),
+                    child: isAdding
+                        ? SizedBox(
+                            width: 13.w,
+                            height: 13.w,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.8,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 14.sp,
+                            color: AppColors.primary,
+                          ),
                   ),
                 ),
               ],

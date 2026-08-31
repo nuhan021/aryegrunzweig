@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../controller/technician_equipment_controller.dart';
 
 class TechnicianEditEquipmentScreen extends StatefulWidget {
@@ -52,9 +53,7 @@ class _TechnicianEditEquipmentScreenState
       condition: _controllers[5].text,
     );
     if (!saved || !mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Equipment details saved.')));
+    AppHelperFunctions.showSuccessSnackBar('Equipment details saved.');
     Navigator.pop(context);
   }
 

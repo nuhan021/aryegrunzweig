@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -8,7 +9,7 @@ import '../../../../core/utils/constants/colors.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/shop_controller.dart';
 import '../../../orders/controller/orders_controller.dart';
-import '../../../orders/views/screens/order_delivered_screen.dart';
+import '../../../orders/views/screens/order_details_screen.dart';
 import '../../../orders/views/screens/order_tracking_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
@@ -142,19 +143,8 @@ class OrderSuccessScreen extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              height: 70.h,
-                              width: 70.h,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(10.r),
-                              ),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.image_outlined,
-                                color: Colors.grey.shade400,
-                                size: 26.sp,
-                              ),
+                            _SuccessProductImage(
+                              imageUrl: controller.cartProductImage(line),
                             ),
                             10.horizontalSpace,
                             Expanded(
@@ -325,9 +315,7 @@ class OrderSuccessScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              placedOrder.status == OrderStatus.delivered
-                              ? OrderDeliveredScreen(order: placedOrder)
-                              : OrderTrackingScreen(order: placedOrder),
+                              OrderDetailsScreen(order: placedOrder),
                         ),
                       ),
               ),
@@ -381,6 +369,41 @@ class OrderSuccessScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SuccessProductImage extends StatelessWidget {
+  const _SuccessProductImage({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholder = Icon(
+      Icons.image_outlined,
+      color: Colors.grey.shade400,
+      size: 26.sp,
+    );
+    return Container(
+      height: 70.h,
+      width: 70.h,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      alignment: Alignment.center,
+      child: imageUrl == null || imageUrl!.trim().isEmpty
+          ? placeholder
+          : CachedNetworkImage(
+              imageUrl: imageUrl!,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.contain,
+              placeholder: (_, _) => placeholder,
+              errorWidget: (_, _, _) => placeholder,
+            ),
     );
   }
 }

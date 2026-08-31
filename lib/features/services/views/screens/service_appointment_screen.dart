@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../home/views/widgets/service_request_buttons.dart';
 import '../../controller/services_controller.dart';
 import 'service_request_overview_screen.dart';
@@ -92,14 +93,9 @@ class ServiceAppointmentScreen extends StatelessWidget {
 
                     SrPrimaryButton(
                       text: 'Call office',
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Calling Central Care: (514) 555-0100',
-                              ),
-                            ),
-                          ),
+                      onPressed: () => AppHelperFunctions.showSnackBar(
+                        'Calling Central Care: (514) 555-0100',
+                      ),
                     ),
                     10.verticalSpace,
                     SrOutlineButton(

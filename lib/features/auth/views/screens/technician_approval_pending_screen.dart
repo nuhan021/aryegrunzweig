@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/common/styles/global_text_style.dart';
 import '../../../../core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import '../../../../core/utils/helpers/app_helper.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../app_bottom_nav_bar/controller/app_bottom_nav_bar_controller.dart';
 import '../../controller/auth_controller.dart';
@@ -85,12 +86,13 @@ class TechnicianApprovalPendingScreen extends StatelessWidget {
       Get.offAllNamed(AppRoute.appBottomNavBarScreen);
       return;
     }
-    final message = success
-        ? 'Your technician account is still awaiting approval.'
-        : controller.errorMessage.value;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    if (success) {
+      AppHelperFunctions.showSnackBar(
+        'Your technician account is still awaiting approval.',
+      );
+    } else {
+      AppHelperFunctions.showErrorSnackBar(controller.errorMessage.value);
+    }
   }
 
   Future<void> _logout() async {

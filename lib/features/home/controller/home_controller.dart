@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/utils/helpers/app_helper.dart';
+import '../../../core/utils/logging/logger.dart';
 import '../../auth/models/auth_models.dart';
 import '../../profile/data/profile_repository.dart';
 import '../../services/data/service_request_models.dart';
@@ -87,24 +88,29 @@ class HomeController extends GetxController {
     if (srIsLoadingCatalog.value) return;
     srIsLoadingCatalog.value = true;
     srErrorMessage.value = '';
-    final catalog = await _serviceRepository.getCatalog();
-    final addresses = await _profileRepository.getAddresses();
+
+    // Start both requests together, but do not make the issue catalog wait for
+    // the saved-address request. The first screen only needs catalog data.
+    final catalogFuture = _serviceRepository.getCatalog();
+    final addressesFuture = _profileRepository.getAddresses();
+    final catalog = await catalogFuture;
     if (catalog.isSuccess && catalog.data != null) {
       srCategories.assignAll(catalog.data!);
       if (srCategories.isNotEmpty) srSelectCategoryModel(srCategories.first);
     } else {
       srErrorMessage.value = catalog.errorMessage;
     }
+
+    srIsLoadingCatalog.value = false;
+
+    final addresses = await addressesFuture;
     if (addresses.isSuccess && addresses.data != null) {
       srAddresses.assignAll(addresses.data!);
       if (srAddresses.isNotEmpty) {
         final primary = srAddresses.firstWhereOrNull((item) => item.isPrimary);
         srSelectAddress(primary ?? srAddresses.first);
       }
-    } else if (srErrorMessage.value.isEmpty) {
-      srErrorMessage.value = addresses.errorMessage;
     }
-    srIsLoadingCatalog.value = false;
   }
 
   void srSelectCategoryModel(ServiceCatalogCategory category) {
@@ -191,15 +197,29 @@ class HomeController extends GetxController {
   }
 
   Future<void> srPickImage() async {
-    if (srImages.length + srVideos.length >= 10) {
+    final remaining = 10 - srImages.length - srVideos.length;
+    if (remaining <= 0) {
       AppHelperFunctions.showErrorSnackBar(
         'You can attach up to 10 images and videos in total.',
       );
       return;
     }
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      srImages.add(File(image.path));
+    try {
+      final images = await _picker.pickMultiImage(
+        limit: remaining,
+        requestFullMetadata: false,
+      );
+      final existingPaths = srImages.map((file) => file.path).toSet();
+      final newImages = images
+          .where((image) => !existingPaths.contains(image.path))
+          .take(remaining)
+          .map((image) => File(image.path));
+      srImages.addAll(newImages);
+    } catch (error) {
+      AppLoggerHelper.error('Unable to pick service images', error);
+      AppHelperFunctions.showErrorSnackBar(
+        'Could not open your photo library. Please check photo access and try again.',
+      );
     }
   }
 
@@ -265,9 +285,19 @@ class HomeController extends GetxController {
   }
 
   Future<void> pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      selectedImages.add(File(image.path));
+    try {
+      final images = await _picker.pickMultiImage(requestFullMetadata: false);
+      final existingPaths = selectedImages.map((file) => file.path).toSet();
+      selectedImages.addAll(
+        images
+            .where((image) => !existingPaths.contains(image.path))
+            .map((image) => File(image.path)),
+      );
+    } catch (error) {
+      AppLoggerHelper.error('Unable to pick images', error);
+      AppHelperFunctions.showErrorSnackBar(
+        'Could not open your photo library. Please check photo access and try again.',
+      );
     }
   }
 

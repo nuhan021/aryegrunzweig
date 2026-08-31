@@ -16,39 +16,45 @@ class ServiceRequestMediaUpload extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Obx(
-          () => Row(
-            children: [
-              Expanded(
-                child: controller.srImages.isNotEmpty
-                    ? _MediaPreviewTile(
-                        file: controller.srImages.first,
+        Obx(() {
+          // Read observables directly in Obx. LayoutBuilder executes its
+          // callback later, outside GetX's dependency-tracking scope.
+          final images = List<File>.of(controller.srImages);
+          final mediaCount = images.length + controller.srVideos.length;
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final tileWidth = (constraints.maxWidth - 12.w) / 2;
+              final canAddMore = mediaCount < 10;
+              return Wrap(
+                spacing: 12.w,
+                runSpacing: 12.h,
+                children: [
+                  ...images.asMap().entries.map(
+                    (entry) => SizedBox(
+                      width: tileWidth,
+                      child: _MediaPreviewTile(
+                        file: entry.value,
                         isVideo: false,
-                        onRemove: () => controller.srRemoveImage(0),
-                      )
-                    : _UploadBox(
-                        icon: Icons.image_outlined,
-                        label: 'Add photos',
+                        onRemove: () => controller.srRemoveImage(entry.key),
+                      ),
+                    ),
+                  ),
+                  if (canAddMore)
+                    SizedBox(
+                      width: tileWidth,
+                      child: _UploadBox(
+                        icon: Icons.collections_outlined,
+                        label: images.isEmpty
+                            ? 'Add photos'
+                            : 'Add more photos',
                         onTap: () => controller.srPickImage(),
                       ),
-              ),
-              12.horizontalSpace,
-              Expanded(
-                child: controller.srImages.length > 1
-                    ? _MediaPreviewTile(
-                        file: controller.srImages[1],
-                        isVideo: false,
-                        onRemove: () => controller.srRemoveImage(1),
-                      )
-                    : _UploadBox(
-                        icon: Icons.image_outlined,
-                        label: 'Add photos',
-                        onTap: () => controller.srPickImage(),
-                      ),
-              ),
-            ],
-          ),
-        ),
+                    ),
+                ],
+              );
+            },
+          );
+        }),
         12.verticalSpace,
         Obx(
           () => controller.srVideos.isNotEmpty
@@ -195,16 +201,8 @@ class _MediaPreviewTile extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12.r),
             child: isVideo
-                ? Icon(
-                    Icons.videocam,
-                    size: 32.sp,
-                    color: Colors.grey.shade500,
-                  )
-                : Image.file(
-                    file,
-                    fit: BoxFit.cover,
-                    width: double.maxFinite,
-                  ),
+                ? Icon(Icons.videocam, size: 32.sp, color: Colors.grey.shade500)
+                : Image.file(file, fit: BoxFit.cover, width: double.maxFinite),
           ),
         ),
         Positioned(
