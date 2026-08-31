@@ -13,6 +13,7 @@ class SavedAddressesController extends GetxController {
   final addresses = <AddressResponse>[].obs;
   final isLoading = false.obs;
   final isSaving = false.obs;
+  final deletingAddressIds = <String>{}.obs;
   final errorMessage = ''.obs;
 
   @override
@@ -43,22 +44,30 @@ class SavedAddressesController extends GetxController {
     final result = existing == null
         ? await _repository.addAddress(request)
         : await _repository.updateAddress(existing.id, request);
-    isSaving.value = false;
     if (!result.isSuccess) {
+      isSaving.value = false;
       AppHelperFunctions.showErrorSnackBar(result.errorMessage);
       return false;
     }
     await loadAddresses();
+    isSaving.value = false;
     return true;
   }
 
   Future<void> deleteAddress(AddressResponse address) async {
-    final result = await _repository.deleteAddress(address.id);
-    if (result.isSuccess && result.data?.success == true) {
-      addresses.removeWhere((item) => item.id == address.id);
-      AppHelperFunctions.showSuccessSnackBar('Address deleted successfully');
-    } else {
-      AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+    if (deletingAddressIds.contains(address.id)) return;
+    deletingAddressIds.add(address.id);
+    try {
+      final result = await _repository.deleteAddress(address.id);
+      if (result.isSuccess && result.data?.success == true) {
+        addresses.removeWhere((item) => item.id == address.id);
+        if (Get.isBottomSheetOpen == true) Get.back();
+        AppHelperFunctions.showSuccessSnackBar('Address deleted successfully');
+      } else {
+        AppHelperFunctions.showErrorSnackBar(result.errorMessage);
+      }
+    } finally {
+      deletingAddressIds.remove(address.id);
     }
   }
 
@@ -90,24 +99,32 @@ class SavedAddressesController extends GetxController {
                   openEditor(context, address);
                 },
               ),
-              ListTile(
-                enabled: !address.isPrimary,
-                leading: Icon(
-                  Icons.delete,
-                  color: address.isPrimary ? Colors.grey : Colors.red,
-                ),
-                title: Text(
-                  address.isPrimary
-                      ? 'Primary address cannot be deleted'
-                      : 'Delete Address',
-                ),
-                onTap: address.isPrimary
-                    ? null
-                    : () {
-                        Get.back();
-                        deleteAddress(address);
-                      },
-              ),
+              Obx(() {
+                final deleting = deletingAddressIds.contains(address.id);
+                return ListTile(
+                  enabled: !address.isPrimary && !deleting,
+                  leading: deleting
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.2),
+                        )
+                      : Icon(
+                          Icons.delete,
+                          color: address.isPrimary ? Colors.grey : Colors.red,
+                        ),
+                  title: Text(
+                    address.isPrimary
+                        ? 'Primary address cannot be deleted'
+                        : deleting
+                        ? 'Deleting...'
+                        : 'Delete Address',
+                  ),
+                  onTap: address.isPrimary || deleting
+                      ? null
+                      : () => deleteAddress(address),
+                );
+              }),
             ],
           ),
         ),
